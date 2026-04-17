@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Prisma } from "@/app/generated/prisma/client";
+import { auth } from "@/auth";
+import { addToCart } from "@/app/actions/cart";
 import { prisma } from "@/lib/prisma";
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
@@ -9,7 +11,7 @@ function single(value: string | string[] | undefined) {
   return value ?? "";
 }
 
-function getOrderBy(sort: string): Prisma.ProductOrderByWithRelationInput[] {
+function getOrderBy(sort: string): NonNullable<Prisma.ProductFindManyArgs["orderBy"]> {
   switch (sort) {
     case "price_asc":
       return [{ priceCents: "asc" }, { createdAt: "desc" }];
@@ -32,6 +34,7 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<SearchParamsInput>;
 }) {
+  const session = await auth();
   const resolved = await searchParams;
 
   const q = single(resolved.q).trim();
@@ -75,6 +78,23 @@ export default async function ProductsPage({
             Products
           </h1>
           <p className="mt-3 text-sm text-stone-600">Public catalog with search and filters.</p>
+          <div className="mt-4 flex gap-2">
+            {session?.user ? (
+              <Link
+                href="/cart"
+                className="border border-stone-300 px-4 py-2 text-xs tracking-widest uppercase text-stone-600 hover:text-stone-800"
+              >
+                Open cart
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="border border-stone-300 px-4 py-2 text-xs tracking-widest uppercase text-stone-600 hover:text-stone-800"
+              >
+                Login to buy
+              </Link>
+            )}
+          </div>
         </section>
 
         <section className="rounded border border-stone-200 bg-white p-6">
@@ -174,6 +194,29 @@ export default async function ProductsPage({
                 >
                   {item.stock > 0 ? `In stock (${item.stock})` : "Out of stock"}
                 </p>
+                {item.stock > 0 && (
+                  <>
+                    {session?.user ? (
+                      <form action={addToCart} className="mt-4">
+                        <input type="hidden" name="productId" value={item.id} />
+                        <input type="hidden" name="quantity" value="1" />
+                        <button
+                          type="submit"
+                          className="bg-stone-800 px-3 py-2 text-xs tracking-widest uppercase text-white hover:bg-stone-900"
+                        >
+                          Add to cart
+                        </button>
+                      </form>
+                    ) : (
+                      <Link
+                        href="/login"
+                        className="mt-4 inline-block border border-stone-300 px-3 py-2 text-xs tracking-widest uppercase text-stone-600 hover:text-stone-800"
+                      >
+                        Login to add
+                      </Link>
+                    )}
+                  </>
+                )}
               </article>
             ))
           )}

@@ -29,6 +29,12 @@ export default async function DashboardPage() {
           >
             Products
           </Link>
+          <Link
+            href="/cart"
+            className="text-xs tracking-widest uppercase text-stone-500 hover:text-stone-800 transition-colors"
+          >
+            Cart
+          </Link>
           {session.user.role === "ADMIN" && (
             <Link
               href="/admin"

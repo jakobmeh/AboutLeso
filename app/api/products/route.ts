@@ -8,7 +8,7 @@ function parsePositiveInt(value: string | null, fallback: number, max: number) {
   return Math.min(parsed, max);
 }
 
-function getOrderBy(sort: string): Prisma.ProductOrderByWithRelationInput[] {
+function getOrderBy(sort: string): NonNullable<Prisma.ProductFindManyArgs["orderBy"]> {
   switch (sort) {
     case "price_asc":
       return [{ priceCents: "asc" }, { createdAt: "desc" }];
