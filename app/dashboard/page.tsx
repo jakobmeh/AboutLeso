@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { signOut } from "@/auth";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -16,9 +17,20 @@ export default async function DashboardPage() {
           Leso
         </h1>
         <div className="flex items-center gap-4">
+          <span className="text-xs tracking-widest uppercase text-stone-500">
+            {session.user.role}
+          </span>
           <span className="text-sm text-stone-600">
             {session.user.name ?? session.user.email}
           </span>
+          {session.user.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              className="text-xs tracking-widest uppercase text-stone-500 hover:text-stone-800 transition-colors"
+            >
+              Admin
+            </Link>
+          )}
           <form
             action={async () => {
               "use server";
