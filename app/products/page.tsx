@@ -11,17 +11,22 @@ function single(value: string | string[] | undefined) {
   return value ?? "";
 }
 
-function getOrderBy(sort: string): NonNullable<Prisma.ProductFindManyArgs["orderBy"]> {
+const ORDER_BY_NEWEST = [{ createdAt: "desc" as const }];
+const ORDER_BY_PRICE_ASC = [{ priceCents: "asc" as const }, { createdAt: "desc" as const }];
+const ORDER_BY_PRICE_DESC = [{ priceCents: "desc" as const }, { createdAt: "desc" as const }];
+const ORDER_BY_NAME_ASC = [{ name: "asc" as const }, { createdAt: "desc" as const }];
+
+function getOrderBy(sort: string) {
   switch (sort) {
     case "price_asc":
-      return [{ priceCents: "asc" }, { createdAt: "desc" }];
+      return ORDER_BY_PRICE_ASC;
     case "price_desc":
-      return [{ priceCents: "desc" }, { createdAt: "desc" }];
+      return ORDER_BY_PRICE_DESC;
     case "name_asc":
-      return [{ name: "asc" }, { createdAt: "desc" }];
+      return ORDER_BY_NAME_ASC;
     case "newest":
     default:
-      return [{ createdAt: "desc" }];
+      return ORDER_BY_NEWEST;
   }
 }
 
