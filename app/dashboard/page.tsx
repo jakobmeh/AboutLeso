@@ -23,6 +23,12 @@ export default async function DashboardPage() {
           <span className="text-sm text-stone-600">
             {session.user.name ?? session.user.email}
           </span>
+          <Link
+            href="/products"
+            className="text-xs tracking-widest uppercase text-stone-500 hover:text-stone-800 transition-colors"
+          >
+            Products
+          </Link>
           {session.user.role === "ADMIN" && (
             <Link
               href="/admin"
