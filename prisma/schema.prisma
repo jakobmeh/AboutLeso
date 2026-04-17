@@ -87,3 +87,58 @@ model PasswordResetToken {
   expires   DateTime
   createdAt DateTime @default(now())
 }
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Season {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Audience {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  priceCents  Int
+  stock       Int      @default(0)
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categoryId String
+  seasonId   String
+  audienceId String
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  season   Season   @relation(fields: [seasonId], references: [id], onDelete: Restrict)
+  audience Audience @relation(fields: [audienceId], references: [id], onDelete: Restrict)
+
+  @@index([categoryId])
+  @@index([seasonId])
+  @@index([audienceId])
+}

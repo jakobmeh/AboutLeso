@@ -47,3 +47,23 @@ export type EmailVerificationCode = Prisma.EmailVerificationCodeModel
  * 
  */
 export type PasswordResetToken = Prisma.PasswordResetTokenModel
+/**
+ * Model Category
+ * 
+ */
+export type Category = Prisma.CategoryModel
+/**
+ * Model Season
+ * 
+ */
+export type Season = Prisma.SeasonModel
+/**
+ * Model Audience
+ * 
+ */
+export type Audience = Prisma.AudienceModel
+/**
+ * Model Product
+ * 
+ */
+export type Product = Prisma.ProductModel
