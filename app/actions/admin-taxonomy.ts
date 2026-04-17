@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Role } from "@/app/generated/prisma/client";
 import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
+
+const IdSchema = z.string().trim().min(1, { message: "Invalid id." });
 
 const NameSchema = z
   .string()
@@ -33,12 +36,16 @@ function readName(formData: FormData) {
 }
 
 function readId(formData: FormData) {
-  const parsed = z.string().cuid().safeParse(formData.get("id"));
+  const parsed = IdSchema.safeParse(formData.get("id"));
   if (!parsed.success) {
     throw new Error("Invalid id.");
   }
 
   return parsed.data;
+}
+
+function redirectWithAdminError(message: string) {
+  redirect(`/admin?error=${encodeURIComponent(message)}`);
 }
 
 export async function createCategory(formData: FormData) {
@@ -58,6 +65,15 @@ export async function createCategory(formData: FormData) {
 export async function deleteCategory(formData: FormData) {
   await ensureAdmin();
   const id = readId(formData);
+
+  const usedByProducts = await prisma.product.count({
+    where: { categoryId: id },
+  });
+  if (usedByProducts > 0) {
+    redirectWithAdminError(
+      `Kategorije ne mores izbrisati, ker je uporabljena na ${usedByProducts} izdelkih.`
+    );
+  }
 
   await prisma.category.delete({
     where: { id },
@@ -84,6 +100,15 @@ export async function deleteSeason(formData: FormData) {
   await ensureAdmin();
   const id = readId(formData);
 
+  const usedByProducts = await prisma.product.count({
+    where: { seasonId: id },
+  });
+  if (usedByProducts > 0) {
+    redirectWithAdminError(
+      `Sezone ne mores izbrisati, ker je uporabljena na ${usedByProducts} izdelkih.`
+    );
+  }
+
   await prisma.season.delete({
     where: { id },
   });
@@ -108,6 +133,15 @@ export async function createAudience(formData: FormData) {
 export async function deleteAudience(formData: FormData) {
   await ensureAdmin();
   const id = readId(formData);
+
+  const usedByProducts = await prisma.product.count({
+    where: { audienceId: id },
+  });
+  if (usedByProducts > 0) {
+    redirectWithAdminError(
+      `Ciljne skupine ne mores izbrisati, ker je uporabljena na ${usedByProducts} izdelkih.`
+    );
+  }
 
   await prisma.audience.delete({
     where: { id },
