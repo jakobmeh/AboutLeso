@@ -83,6 +83,11 @@ export type CartItem = Prisma.CartItemModel
  */
 export type Order = Prisma.OrderModel
 /**
+ * Model UserAddress
+ * 
+ */
+export type UserAddress = Prisma.UserAddressModel
+/**
  * Model CreatorCode
  * 
  */

@@ -25,8 +25,19 @@ type OrderConfirmationEmailInput = {
   customerName?: string | null;
   subtotalCents: number;
   discountCents: number;
+  shippingCents: number;
   totalCents: number;
   creatorCode?: string | null;
+  shippingAddress?: {
+    label?: string | null;
+    fullName: string;
+    line1: string;
+    line2?: string | null;
+    postalCode: string;
+    city: string;
+    country: string;
+    phone?: string | null;
+  } | null;
   items: OrderEmailItem[];
 };
 
@@ -106,6 +117,34 @@ export async function sendOrderConfirmationEmail(
       `
     )
     .join("");
+  const shippingAddressHtml = data.shippingAddress
+    ? `
+      <div style="margin: 0 0 18px; padding: 14px 16px; border: 1px solid #e5e7eb;">
+        <p style="margin: 0 0 8px;"><strong>Naslov dostave</strong></p>
+        ${
+          data.shippingAddress.label
+            ? `<p style="margin: 0; color: #6b7280;">${escapeHtml(data.shippingAddress.label)}</p>`
+            : ""
+        }
+        <p style="margin: 0;">${escapeHtml(data.shippingAddress.fullName)}</p>
+        <p style="margin: 0;">${escapeHtml(data.shippingAddress.line1)}</p>
+        ${
+          data.shippingAddress.line2
+            ? `<p style="margin: 0;">${escapeHtml(data.shippingAddress.line2)}</p>`
+            : ""
+        }
+        <p style="margin: 0;">
+          ${escapeHtml(data.shippingAddress.postalCode)} ${escapeHtml(data.shippingAddress.city)}
+        </p>
+        <p style="margin: 0;">${escapeHtml(data.shippingAddress.country)}</p>
+        ${
+          data.shippingAddress.phone
+            ? `<p style="margin: 6px 0 0; color: #6b7280;">Tel: ${escapeHtml(data.shippingAddress.phone)}</p>`
+            : ""
+        }
+      </div>
+    `
+    : "";
 
   await transporter.sendMail({
     from: `"${process.env.BREVO_FROM_NAME}" <${process.env.BREVO_FROM_EMAIL}>`,
@@ -120,6 +159,7 @@ export async function sendOrderConfirmationEmail(
           <p style="margin: 0 0 6px;"><strong>ID narocila:</strong> ${escapeHtml(data.orderId)}</p>
           <p style="margin: 0 0 6px;"><strong>Vmesni znesek:</strong> ${formatPrice(data.subtotalCents)}</p>
           <p style="margin: 0 0 6px;"><strong>Popust:</strong> -${formatPrice(data.discountCents)}</p>
+          <p style="margin: 0 0 6px;"><strong>Dostava:</strong> ${data.shippingCents === 0 ? "Brezplacno" : formatPrice(data.shippingCents)}</p>
           <p style="margin: 0; font-size: 18px;"><strong>Skupaj:</strong> ${formatPrice(data.totalCents)}</p>
           ${
             data.creatorCode
@@ -127,6 +167,7 @@ export async function sendOrderConfirmationEmail(
               : ""
           }
         </div>
+        ${shippingAddressHtml}
 
         <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb;">
           <thead>

@@ -118,6 +118,52 @@ export default async function OrdersPage({
                   </div>
                 ))}
               </div>
+
+              <div className="border-t border-stone-100 bg-stone-50 px-6 py-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs tracking-widest uppercase text-stone-500">Naslov dostave</p>
+                    {order.shippingFullName ? (
+                      <div className="text-stone-700">
+                        {order.shippingLabel && <p>{order.shippingLabel}</p>}
+                        <p>{order.shippingFullName}</p>
+                        {order.shippingLine1 && <p>{order.shippingLine1}</p>}
+                        {order.shippingLine2 && <p>{order.shippingLine2}</p>}
+                        {(order.shippingPostalCode || order.shippingCity) && (
+                          <p>
+                            {order.shippingPostalCode ?? ""} {order.shippingCity ?? ""}
+                          </p>
+                        )}
+                        {order.shippingCountry && <p>{order.shippingCountry}</p>}
+                        {order.shippingPhone && <p className="text-xs text-stone-500">Tel: {order.shippingPhone}</p>}
+                      </div>
+                    ) : (
+                      <p className="text-stone-500">Naslov ni shranjen.</p>
+                    )}
+                  </div>
+
+                  <div className="ml-auto w-full max-w-xs space-y-1 text-sm">
+                    <div className="flex items-center justify-between text-stone-600">
+                      <span>Vmesni znesek</span>
+                      <span>{formatPrice(order.subtotalCents)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-stone-600">
+                      <span>Popust</span>
+                      <span>-{formatPrice(order.discountCents)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-stone-600">
+                      <span>Dostava</span>
+                      <span>
+                        {order.shippingCents === 0 ? "Brezplacno" : formatPrice(order.shippingCents)}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between border-t border-stone-200 pt-2 font-medium text-stone-900">
+                      <span>Skupaj</span>
+                      <span>{formatPrice(order.totalCents)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </article>
           ))
         )}

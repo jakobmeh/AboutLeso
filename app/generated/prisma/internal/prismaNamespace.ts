@@ -397,6 +397,7 @@ export const ModelName = {
   Cart: 'Cart',
   CartItem: 'CartItem',
   Order: 'Order',
+  UserAddress: 'UserAddress',
   CreatorCode: 'CreatorCode',
   OrderItem: 'OrderItem'
 } as const
@@ -414,7 +415,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "emailVerificationCode" | "passwordResetToken" | "category" | "season" | "audience" | "product" | "cart" | "cartItem" | "order" | "creatorCode" | "orderItem"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "emailVerificationCode" | "passwordResetToken" | "category" | "season" | "audience" | "product" | "cart" | "cartItem" | "order" | "userAddress" | "creatorCode" | "orderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1380,6 +1381,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    UserAddress: {
+      payload: Prisma.$UserAddressPayload<ExtArgs>
+      fields: Prisma.UserAddressFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserAddressFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserAddressFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>
+        }
+        findFirst: {
+          args: Prisma.UserAddressFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserAddressFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>
+        }
+        findMany: {
+          args: Prisma.UserAddressFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>[]
+        }
+        create: {
+          args: Prisma.UserAddressCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>
+        }
+        createMany: {
+          args: Prisma.UserAddressCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserAddressCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>[]
+        }
+        delete: {
+          args: Prisma.UserAddressDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>
+        }
+        update: {
+          args: Prisma.UserAddressUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserAddressDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserAddressUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserAddressUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserAddressUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserAddressPayload>
+        }
+        aggregate: {
+          args: Prisma.UserAddressAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserAddress>
+        }
+        groupBy: {
+          args: Prisma.UserAddressGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserAddressGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserAddressCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserAddressCountAggregateOutputType> | number
+        }
+      }
+    }
     CreatorCode: {
       payload: Prisma.$CreatorCodePayload<ExtArgs>
       fields: Prisma.CreatorCodeFieldRefs
@@ -1724,7 +1799,16 @@ export const OrderScalarFieldEnum = {
   status: 'status',
   subtotalCents: 'subtotalCents',
   discountCents: 'discountCents',
+  shippingCents: 'shippingCents',
   totalCents: 'totalCents',
+  shippingLabel: 'shippingLabel',
+  shippingFullName: 'shippingFullName',
+  shippingLine1: 'shippingLine1',
+  shippingLine2: 'shippingLine2',
+  shippingPostalCode: 'shippingPostalCode',
+  shippingCity: 'shippingCity',
+  shippingCountry: 'shippingCountry',
+  shippingPhone: 'shippingPhone',
   creatorCodeId: 'creatorCodeId',
   commissionCents: 'commissionCents',
   createdAt: 'createdAt',
@@ -1732,6 +1816,25 @@ export const OrderScalarFieldEnum = {
 } as const
 
 export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+export const UserAddressScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  label: 'label',
+  fullName: 'fullName',
+  line1: 'line1',
+  line2: 'line2',
+  postalCode: 'postalCode',
+  city: 'city',
+  country: 'country',
+  phone: 'phone',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserAddressScalarFieldEnum = (typeof UserAddressScalarFieldEnum)[keyof typeof UserAddressScalarFieldEnum]
 
 
 export const CreatorCodeScalarFieldEnum = {
@@ -1990,6 +2093,7 @@ export type GlobalOmitConfig = {
   cart?: Prisma.CartOmit
   cartItem?: Prisma.CartItemOmit
   order?: Prisma.OrderOmit
+  userAddress?: Prisma.UserAddressOmit
   creatorCode?: Prisma.CreatorCodeOmit
   orderItem?: Prisma.OrderItemOmit
 }

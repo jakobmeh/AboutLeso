@@ -38,6 +38,7 @@ model User {
   sessions    Session[]
   cart        Cart?
   orders      Order[]
+  addresses   UserAddress[]
   creatorCode CreatorCode?
 }
 
@@ -187,7 +188,16 @@ model Order {
   status          OrderStatus @default(CONFIRMED)
   subtotalCents   Int
   discountCents   Int         @default(0)
+  shippingCents   Int         @default(0)
   totalCents      Int
+  shippingLabel   String?
+  shippingFullName String?
+  shippingLine1   String?
+  shippingLine2   String?
+  shippingPostalCode String?
+  shippingCity    String?
+  shippingCountry String?
+  shippingPhone   String?
   creatorCodeId   String?
   commissionCents Int         @default(0)
   createdAt       DateTime    @default(now())
@@ -200,6 +210,26 @@ model Order {
   @@index([userId])
   @@index([createdAt])
   @@index([creatorCodeId])
+}
+
+model UserAddress {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String?
+  fullName   String
+  line1      String
+  line2      String?
+  postalCode String
+  city       String
+  country    String
+  phone      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model CreatorCode {
