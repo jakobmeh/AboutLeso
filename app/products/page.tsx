@@ -67,13 +67,18 @@ export default async function ProductsPage({
     prisma.audience.findMany({ orderBy: { name: "asc" } }),
   ]);
 
+  type CategoryWithCount = (typeof allCategories)[0];
+  type TaxItem = (typeof seasons)[0];
+
   // When a group is active, limit sidebar + products to that group's categories
   const groupCategoryIds: string[] = groupDef
-    ? allCategories.filter((c) => groupDef.categorySlugs.includes(c.slug)).map((c) => c.id)
+    ? allCategories
+        .filter((c: CategoryWithCount) => groupDef.categorySlugs.includes(c.slug))
+        .map((c: CategoryWithCount) => c.id)
     : [];
   // Always filter sidebar strictly to the group (empty list = empty sidebar, NOT all categories)
   const categories = groupDef
-    ? allCategories.filter((c) => groupDef.categorySlugs.includes(c.slug))
+    ? allCategories.filter((c: CategoryWithCount) => groupDef.categorySlugs.includes(c.slug))
     : allCategories;
 
   const where: ProductWhere = { isActive: true };
@@ -111,8 +116,7 @@ export default async function ProductsPage({
   });
 
   type ProductItem = (typeof rawProducts)[0];
-  type CategoryWithCount = (typeof categories)[0];
-  type TaxItem = (typeof seasons)[0];
+  type ProductVariantItem = ProductItem["variants"][number];
 
   const products: ProductItem[] =
     sort === "discount"
@@ -457,10 +461,10 @@ export default async function ProductsPage({
                     ? discountPct(item.priceCents, item.compareAtPriceCents)
                     : 0;
                   const activeVariants = item.variants.filter(
-                    (variant) => variant.isActive && variant.stock > 0
+                    (variant: ProductVariantItem) => variant.isActive && variant.stock > 0
                   );
                   const totalStock = activeVariants.reduce(
-                    (sum, variant) => sum + variant.stock,
+                    (sum: number, variant: ProductVariantItem) => sum + variant.stock,
                     0
                   );
                   return (
@@ -515,7 +519,7 @@ export default async function ProductsPage({
                                     <option value="" disabled>
                                       Izberi velikost
                                     </option>
-                                    {activeVariants.map((variant) => (
+                                    {activeVariants.map((variant: ProductVariantItem) => (
                                       <option key={variant.id} value={variant.id}>
                                         {variant.size} ({variant.stock} kos)
                                       </option>
@@ -551,7 +555,7 @@ export default async function ProductsPage({
                         </div>
                         {activeVariants.length > 0 && (
                           <div className="mt-2 text-[11px] text-stone-500">
-                            Velikosti: {activeVariants.map((variant) => variant.size).join(", ")}
+                            Velikosti: {activeVariants.map((variant: ProductVariantItem) => variant.size).join(", ")}
                           </div>
                         )}
                         {totalStock === 0 && (
