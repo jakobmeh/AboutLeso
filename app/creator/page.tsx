@@ -38,7 +38,7 @@ export default async function CreatorPage() {
     0
   );
   const totalOrdersCents = creatorCode.orders.reduce(
-    (sum: number, o: OrderWithUser) => sum + o.totalCents,
+    (sum: number, o: OrderWithUser) => sum + (o.subtotalCents - o.discountCents),
     0
   );
 
@@ -130,7 +130,9 @@ export default async function CreatorPage() {
                       <td className="py-3 pr-4 text-stone-500">{formatDate(order.createdAt)}</td>
                       <td className="py-3 pr-4 font-mono text-xs text-stone-600">{order.id.slice(0, 12)}…</td>
                       <td className="py-3 pr-4 text-stone-700">{order.user.name ?? order.user.email}</td>
-                      <td className="py-3 pr-4 text-right text-stone-800">{formatPrice(order.totalCents)}</td>
+                      <td className="py-3 pr-4 text-right text-stone-800">
+                        {formatPrice(order.subtotalCents - order.discountCents)}
+                      </td>
                       <td className="py-3 pr-4 text-right text-stone-500">{formatPrice(order.discountCents)}</td>
                       <td className="py-3 text-right font-medium text-green-700">{formatPrice(order.commissionCents)}</td>
                     </tr>

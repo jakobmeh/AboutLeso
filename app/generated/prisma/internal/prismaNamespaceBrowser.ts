@@ -64,6 +64,7 @@ export const ModelName = {
   Cart: 'Cart',
   CartItem: 'CartItem',
   Order: 'Order',
+  UserAddress: 'UserAddress',
   CreatorCode: 'CreatorCode',
   OrderItem: 'OrderItem'
 } as const
@@ -241,7 +242,16 @@ export const OrderScalarFieldEnum = {
   status: 'status',
   subtotalCents: 'subtotalCents',
   discountCents: 'discountCents',
+  shippingCents: 'shippingCents',
   totalCents: 'totalCents',
+  shippingLabel: 'shippingLabel',
+  shippingFullName: 'shippingFullName',
+  shippingLine1: 'shippingLine1',
+  shippingLine2: 'shippingLine2',
+  shippingPostalCode: 'shippingPostalCode',
+  shippingCity: 'shippingCity',
+  shippingCountry: 'shippingCountry',
+  shippingPhone: 'shippingPhone',
   creatorCodeId: 'creatorCodeId',
   commissionCents: 'commissionCents',
   createdAt: 'createdAt',
@@ -249,6 +259,25 @@ export const OrderScalarFieldEnum = {
 } as const
 
 export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+export const UserAddressScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  label: 'label',
+  fullName: 'fullName',
+  line1: 'line1',
+  line2: 'line2',
+  postalCode: 'postalCode',
+  city: 'city',
+  country: 'country',
+  phone: 'phone',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserAddressScalarFieldEnum = (typeof UserAddressScalarFieldEnum)[keyof typeof UserAddressScalarFieldEnum]
 
 
 export const CreatorCodeScalarFieldEnum = {
