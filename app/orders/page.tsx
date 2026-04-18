@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { cancelOrder } from "@/app/actions/admin-orders";
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
 
@@ -19,14 +20,20 @@ function formatDate(date: Date) {
 }
 
 const statusLabel: Record<string, string> = {
-  PENDING: "V obdelavi",
+  PENDING: "Čakanje na pregled",
   CONFIRMED: "Potrjeno",
+  PREPARING: "Pripravljeno za pošiljanje",
+  SHIPPED: "V dostavi",
+  DELIVERED: "Dostavljeno",
   CANCELLED: "Preklicano",
 };
 
 const statusColor: Record<string, string> = {
   PENDING: "bg-amber-50 text-amber-700 border-amber-200",
-  CONFIRMED: "bg-green-50 text-green-700 border-green-200",
+  CONFIRMED: "bg-blue-50 text-blue-700 border-blue-200",
+  PREPARING: "bg-purple-50 text-purple-700 border-purple-200",
+  SHIPPED: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  DELIVERED: "bg-green-50 text-green-700 border-green-200",
   CANCELLED: "bg-red-50 text-red-600 border-red-200",
 };
 
@@ -116,12 +123,26 @@ export default async function OrdersPage({
                 <div className="space-y-1 text-right">
                   <p className="text-xs tracking-widest uppercase text-stone-400">Skupaj</p>
                   <p className="text-lg font-light text-stone-900">{formatPrice(order.totalCents)}</p>
-                  <a
-                    href={`/api/orders/${order.id}/invoice`}
-                    className="inline-flex border border-stone-300 px-3 py-1 text-[10px] tracking-widest uppercase text-stone-600 hover:border-stone-700 hover:text-stone-900 transition-colors"
-                  >
-                    Prenesi PDF
-                  </a>
+                  <div className="flex gap-2 justify-end flex-wrap">
+                    <a
+                      href={`/api/orders/${order.id}/invoice`}
+                      className="inline-flex border border-stone-300 px-3 py-1 text-[10px] tracking-widest uppercase text-stone-600 hover:border-stone-700 hover:text-stone-900 transition-colors"
+                    >
+                      Prenesi PDF
+                    </a>
+                    {order.status === "PENDING" && (
+                      <form action={cancelOrder}>
+                        <input type="hidden" name="orderId" value={order.id} />
+                        <button
+                          type="submit"
+                          className="inline-flex border border-red-200 px-3 py-1 text-[10px] tracking-widest uppercase text-red-500 hover:border-red-500 hover:text-red-700 transition-colors"
+                          onClick={(e) => { if (!confirm("Res želiš preklicati naročilo?")) e.preventDefault(); }}
+                        >
+                          Prekliči
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </div>
               </div>
 

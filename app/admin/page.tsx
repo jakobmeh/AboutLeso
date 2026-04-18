@@ -709,70 +709,96 @@ export default async function AdminPage({
         {/* Orders section */}
         {section === "orders" && (() => {
           type AdminOrder = (typeof allOrders)[0];
-          const statusLabel: Record<string, string> = { PENDING: "V obdelavi", CONFIRMED: "Potrjeno", CANCELLED: "Preklicano" };
-          const statusColor: Record<string, string> = {
-            PENDING: "text-amber-700", CONFIRMED: "text-green-700", CANCELLED: "text-red-600"
+          const STATUS_LABELS: Record<string, string> = {
+            PENDING: "Čakanje na pregled",
+            CONFIRMED: "Potrjeno",
+            PREPARING: "Pripravljeno za pošiljanje",
+            SHIPPED: "V dostavi",
+            DELIVERED: "Dostavljeno",
+            CANCELLED: "Preklicano",
+          };
+          const STATUS_COLORS: Record<string, string> = {
+            PENDING: "bg-amber-50 text-amber-700 border-amber-200",
+            CONFIRMED: "bg-blue-50 text-blue-700 border-blue-200",
+            PREPARING: "bg-purple-50 text-purple-700 border-purple-200",
+            SHIPPED: "bg-cyan-50 text-cyan-700 border-cyan-200",
+            DELIVERED: "bg-green-50 text-green-700 border-green-200",
+            CANCELLED: "bg-red-50 text-red-600 border-red-200",
           };
           return (
             <section className="rounded border border-stone-200 bg-white p-6 space-y-4">
-              <h2 className="text-lg font-medium text-stone-800">Naročila ({allOrders.length})</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-stone-800">Naročila ({allOrders.length})</h2>
+                <div className="flex gap-2 flex-wrap">
+                  {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                    <span key={key} className={`text-xs px-2 py-0.5 border rounded-full ${STATUS_COLORS[key]}`}>{label}</span>
+                  ))}
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full border-collapse text-left text-sm">
                   <thead>
                     <tr className="border-b border-stone-200 text-xs tracking-widest uppercase text-stone-400">
-                      <th className="py-2 pr-4 font-medium">ID</th>
-                      <th className="py-2 pr-4 font-medium">Stranka</th>
-                      <th className="py-2 pr-4 font-medium">Datum</th>
-                      <th className="py-2 pr-4 font-medium">Znesek</th>
-                      <th className="py-2 pr-4 font-medium">Status</th>
-                      <th className="py-2 pr-4 font-medium">Tracking</th>
-                      <th className="py-2 font-medium">Akcije</th>
+                      <th className="py-2 pr-3 font-medium">ID / Stranka</th>
+                      <th className="py-2 pr-3 font-medium">Datum</th>
+                      <th className="py-2 pr-3 font-medium">Znesek</th>
+                      <th className="py-2 pr-3 font-medium">Artikli</th>
+                      <th className="py-2 pr-3 font-medium">Status</th>
+                      <th className="py-2 font-medium">Tracking DPD</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100">
                     {allOrders.map((order: AdminOrder) => (
-                      <tr key={order.id}>
-                        <td className="py-3 pr-4 font-mono text-xs text-stone-500">{order.id.slice(0, 12)}…</td>
-                        <td className="py-3 pr-4">
-                          <p className="text-stone-800 text-xs">{order.user.name ?? "—"}</p>
-                          <p className="text-stone-400 text-xs">{order.user.email}</p>
+                      <tr key={order.id} className="hover:bg-stone-50/50">
+                        <td className="py-3 pr-3">
+                          <p className="font-mono text-xs text-stone-400">{order.id.slice(0, 10)}…</p>
+                          <p className="text-xs text-stone-800 font-medium mt-0.5">{order.user.name ?? "—"}</p>
+                          <p className="text-xs text-stone-400">{order.user.email}</p>
                         </td>
-                        <td className="py-3 pr-4 text-xs text-stone-600">
+                        <td className="py-3 pr-3 text-xs text-stone-600 whitespace-nowrap">
                           {new Intl.DateTimeFormat("sl-SI", { dateStyle: "short", timeStyle: "short" }).format(order.createdAt)}
                         </td>
-                        <td className="py-3 pr-4 text-xs font-medium text-stone-800">
+                        <td className="py-3 pr-3 text-xs font-semibold text-stone-800 whitespace-nowrap">
                           {(order.totalCents / 100).toFixed(2)} €
                         </td>
-                        <td className="py-3 pr-4">
+                        <td className="py-3 pr-3 text-xs text-stone-500 max-w-[180px]">
+                          {order.items.map((i: { productName: string; productSize: string | null; quantity: number }) =>
+                            `${i.productName} (${i.productSize ?? "?"}) ×${i.quantity}`
+                          ).join(", ")}
+                        </td>
+                        <td className="py-3 pr-3">
                           <form action={setOrderStatus} className="flex items-center gap-1">
                             <input type="hidden" name="orderId" value={order.id} />
                             <select name="status" defaultValue={order.status}
-                              className={`border border-stone-200 px-2 py-1 text-xs outline-none bg-white ${statusColor[order.status] ?? ""}`}>
-                              <option value="PENDING">V obdelavi</option>
+                              className="border border-stone-200 px-2 py-1 text-xs outline-none bg-white text-stone-700 min-w-[160px]">
+                              <option value="PENDING">Čakanje na pregled</option>
                               <option value="CONFIRMED">Potrjeno</option>
+                              <option value="PREPARING">Pripravljeno za pošiljanje</option>
+                              <option value="SHIPPED">V dostavi</option>
+                              <option value="DELIVERED">Dostavljeno</option>
                               <option value="CANCELLED">Preklicano</option>
                             </select>
-                            <button type="submit" className="text-xs bg-stone-800 text-white px-2 py-1 hover:bg-stone-900">✓</button>
+                            <button type="submit" className="text-xs bg-stone-800 text-white px-2 py-1.5 hover:bg-stone-900">✓</button>
                           </form>
+                          <span className={`mt-1 inline-block text-[10px] px-2 py-0.5 border ${STATUS_COLORS[order.status] ?? ""}`}>
+                            {STATUS_LABELS[order.status] ?? order.status}
+                          </span>
                         </td>
-                        <td className="py-3 pr-4">
+                        <td className="py-3">
                           <form action={setTrackingNumber} className="flex items-center gap-1">
                             <input type="hidden" name="orderId" value={order.id} />
                             <input type="text" name="trackingNumber" defaultValue={order.trackingNumber ?? ""}
                               placeholder="DPD številka"
-                              className="border border-stone-200 px-2 py-1 text-xs w-32 outline-none focus:border-stone-500" />
-                            <button type="submit" className="text-xs bg-stone-800 text-white px-2 py-1 hover:bg-stone-900">✓</button>
+                              className="border border-stone-200 px-2 py-1 text-xs w-28 outline-none focus:border-stone-500" />
+                            <button type="submit" className="text-xs bg-stone-800 text-white px-2 py-1.5 hover:bg-stone-900">✓</button>
                           </form>
                           {order.trackingNumber && (
                             <a href={`https://tracking.dpd.de/status/sl_SI/parcel/${order.trackingNumber}`}
                               target="_blank" rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline mt-0.5 block">
-                              Sledenje ↗
+                              className="text-xs text-blue-600 hover:underline mt-1 block">
+                              Sledi ↗
                             </a>
                           )}
-                        </td>
-                        <td className="py-3 text-xs text-stone-500">
-                          {order.items.map((i: { productName: string; productSize: string | null; quantity: number }) => `${i.productName} (${i.productSize ?? "?"}) ×${i.quantity}`).join(", ")}
                         </td>
                       </tr>
                     ))}
