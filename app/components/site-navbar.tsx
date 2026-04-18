@@ -11,13 +11,18 @@ export async function SiteNavbar() {
   ]);
 
   const user = session?.user;
-  const cartItems = user?.id
+  type CartQuantityRow = { quantity: number };
+
+  const cartItems: CartQuantityRow[] = user?.id
     ? await prisma.cartItem.findMany({
         where: { cart: { userId: user.id } },
         select: { quantity: true },
       })
     : [];
-  const cartQuantity = cartItems.reduce((sum: number, item) => sum + item.quantity, 0);
+  let cartQuantity = 0;
+  for (const item of cartItems) {
+    cartQuantity += item.quantity;
+  }
 
   return (
     <header
