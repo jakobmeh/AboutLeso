@@ -5,6 +5,7 @@ import { PDFDocument, rgb } from "pdf-lib";
 
 type InvoiceItem = {
   productName: string;
+  productSize?: string | null;
   quantity: number;
   unitPriceCents: number;
   lineTotalCents: number;
@@ -310,7 +311,10 @@ export async function createInvoicePdf(input: InvoicePdfInput) {
   drawTableHeader();
 
   for (const item of input.items) {
-    const itemNameLines = wrapText(item.productName, tableProductWidth, fontRegular, 11);
+    const itemLabel = item.productSize
+      ? `${item.productName} (${item.productSize})`
+      : item.productName;
+    const itemNameLines = wrapText(itemLabel, tableProductWidth, fontRegular, 11);
     const rowLines = Math.max(itemNameLines.length, 1);
     const rowHeight = rowLines * ROW_HEIGHT + 10;
 

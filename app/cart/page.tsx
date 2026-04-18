@@ -49,13 +49,20 @@ export default async function CartPage({
       include: {
         items: {
           include: {
-            product: {
+            variant: {
               select: {
                 id: true,
-                name: true,
-                priceCents: true,
+                size: true,
                 stock: true,
                 isActive: true,
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    priceCents: true,
+                    isActive: true,
+                  },
+                },
               },
             },
           },
@@ -74,7 +81,7 @@ export default async function CartPage({
 
   const items: CartItem[] = cart?.items ?? [];
   const subtotalCents = items.reduce(
-    (sum: number, item: CartItem) => sum + item.product.priceCents * item.quantity,
+    (sum: number, item: CartItem) => sum + item.variant.product.priceCents * item.quantity,
     0
   );
   const shippingCents = getShippingCents(subtotalCents);
@@ -141,18 +148,28 @@ export default async function CartPage({
                     className="flex flex-col gap-4 py-6 md:grid md:grid-cols-[1fr_auto_auto_auto_auto] md:items-center"
                   >
                     <div>
-                      <p className="text-sm font-medium text-stone-900">{item.product.name}</p>
-                      {!item.product.isActive && (
+                      <p className="text-sm font-medium text-stone-900">
+                        {item.variant.product.name}
+                        <span className="ml-2 text-xs uppercase tracking-widest text-stone-500">
+                          Velikost: {item.variant.size}
+                        </span>
+                      </p>
+                      {!item.variant.product.isActive && (
                         <span className="mt-1 inline-block text-xs tracking-widest uppercase text-red-500">
                           Ni vec aktiven
                         </span>
                       )}
+                      {!item.variant.isActive && (
+                        <span className="mt-1 ml-2 inline-block text-xs tracking-widest uppercase text-red-500">
+                          Velikost ni aktivna
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-stone-600 md:text-right">
-                      {formatPrice(item.product.priceCents)}
+                      {formatPrice(item.variant.product.priceCents)}
                     </p>
                     <p className="text-xs text-stone-400 md:text-right">
-                      {item.product.stock} kos
+                      {item.variant.stock} kos
                     </p>
                     <form action={updateCartItemQuantity} className="flex items-center gap-2 md:justify-end">
                       <input type="hidden" name="itemId" value={item.id} />
@@ -160,7 +177,7 @@ export default async function CartPage({
                         type="number"
                         name="quantity"
                         min={0}
-                        max={Math.max(item.product.stock, 0)}
+                        max={Math.max(item.variant.stock, 0)}
                         defaultValue={item.quantity}
                         className="w-16 border border-stone-300 px-2 py-1 text-center text-sm text-stone-800 outline-none focus:border-stone-700"
                       />
@@ -173,7 +190,7 @@ export default async function CartPage({
                     </form>
                     <div className="flex items-center justify-between gap-2 md:flex-col md:items-end">
                       <p className="text-sm font-medium text-stone-800">
-                        {formatPrice(item.product.priceCents * item.quantity)}
+                        {formatPrice(item.variant.product.priceCents * item.quantity)}
                       </p>
                       <form action={removeCartItem}>
                         <input type="hidden" name="itemId" value={item.id} />

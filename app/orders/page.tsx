@@ -118,6 +118,9 @@ export default async function OrdersPage({
                   <div key={item.id} className="flex items-center justify-between py-4">
                     <div>
                       <p className="text-sm text-stone-800">{item.productName}</p>
+                      {item.productSize && (
+                        <p className="text-xs text-stone-500">Velikost: {item.productSize}</p>
+                      )}
                       <p className="text-xs text-stone-400">{item.quantity} × {formatPrice(item.unitPriceCents)}</p>
                     </div>
                     <p className="text-sm font-medium text-stone-700">{formatPrice(item.lineTotalCents)}</p>

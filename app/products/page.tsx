@@ -91,7 +91,7 @@ export default async function ProductsPage({
   }
   if (seasonId) where.seasonId = seasonId;
   if (audienceId) where.audienceId = audienceId;
-  if (onlyInStock) where.stock = { gt: 0 };
+  if (onlyInStock) where.variants = { some: { isActive: true, stock: { gt: 0 } } };
   if (onlySale) where.compareAtPriceCents = { not: null };
   if (minPrice > 0) where.priceCents = { ...(where.priceCents as object), gte: Math.round(minPrice * 100) };
   if (maxPrice > 0) where.priceCents = { ...(where.priceCents as object), lte: Math.round(maxPrice * 100) };
@@ -103,6 +103,10 @@ export default async function ProductsPage({
       category: { select: { id: true, name: true } },
       season: { select: { id: true, name: true } },
       audience: { select: { id: true, name: true } },
+      variants: {
+        select: { id: true, size: true, stock: true, isActive: true },
+        orderBy: { size: "asc" },
+      },
     },
   });
 
@@ -452,6 +456,13 @@ export default async function ProductsPage({
                   const pct = item.compareAtPriceCents
                     ? discountPct(item.priceCents, item.compareAtPriceCents)
                     : 0;
+                  const activeVariants = item.variants.filter(
+                    (variant) => variant.isActive && variant.stock > 0
+                  );
+                  const totalStock = activeVariants.reduce(
+                    (sum, variant) => sum + variant.stock,
+                    0
+                  );
                   return (
                     <article key={item.id} className="group relative bg-white">
                       {/* Image */}
@@ -476,21 +487,43 @@ export default async function ProductsPage({
                               -{pct}%
                             </span>
                           )}
-                          {item.stock === 0 && (
+                          {totalStock === 0 && (
                             <span className="bg-stone-800/80 text-white text-xs px-2 py-0.5 tracking-widest uppercase leading-none">
                               Razprodano
                             </span>
                           )}
                         </div>
                         {/* Quick add — slides up on hover */}
-                        {item.stock > 0 && (
+                        {totalStock > 0 && (
                           <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                             {session?.user ? (
-                              <form action={addToCart}>
-                                <input type="hidden" name="productId" value={item.id} />
+                              <form action={addToCart} className="space-y-2 bg-stone-900/90 p-2 backdrop-blur-sm">
                                 <input type="hidden" name="quantity" value="1" />
-                                <button type="submit" className="w-full bg-stone-900/90 backdrop-blur-sm py-3 text-xs tracking-[0.15em] uppercase text-white hover:bg-stone-900 transition-colors">
-                                  Dodaj v košarico
+                                {activeVariants.length === 1 ? (
+                                  <input
+                                    type="hidden"
+                                    name="variantId"
+                                    value={activeVariants[0].id}
+                                  />
+                                ) : (
+                                  <select
+                                    name="variantId"
+                                    required
+                                    defaultValue=""
+                                    className="w-full border border-white/30 bg-black/20 px-2 py-2 text-xs text-white outline-none"
+                                  >
+                                    <option value="" disabled>
+                                      Izberi velikost
+                                    </option>
+                                    {activeVariants.map((variant) => (
+                                      <option key={variant.id} value={variant.id}>
+                                        {variant.size} ({variant.stock} kos)
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                                <button type="submit" className="w-full border border-white/60 py-2 text-xs tracking-[0.15em] uppercase text-white hover:bg-black/20 transition-colors">
+                                  Dodaj v kosarico
                                 </button>
                               </form>
                             ) : (
@@ -516,7 +549,12 @@ export default async function ProductsPage({
                             <span className="text-xs text-stone-400 line-through">{formatPrice(item.compareAtPriceCents)}</span>
                           )}
                         </div>
-                        {item.stock === 0 && (
+                        {activeVariants.length > 0 && (
+                          <div className="mt-2 text-[11px] text-stone-500">
+                            Velikosti: {activeVariants.map((variant) => variant.size).join(", ")}
+                          </div>
+                        )}
+                        {totalStock === 0 && (
                           <div className="mt-2.5 text-xs tracking-widest uppercase text-stone-300">Ni na zalogi</div>
                         )}
                       </div>

@@ -74,6 +74,10 @@ export async function GET(request: NextRequest) {
         category: { select: { id: true, name: true, slug: true } },
         season: { select: { id: true, name: true, slug: true } },
         audience: { select: { id: true, name: true, slug: true } },
+        variants: {
+          select: { id: true, size: true, stock: true, isActive: true },
+          orderBy: { size: "asc" },
+        },
       },
     }),
     prisma.product.count({ where }),
@@ -81,13 +85,21 @@ export async function GET(request: NextRequest) {
 
   return Response.json({
     items: items.map((item: (typeof items)[0]) => ({
+      variants: item.variants.map((variant) => ({
+        id: variant.id,
+        size: variant.size,
+        stock: variant.stock,
+        isActive: variant.isActive,
+      })),
       id: item.id,
       name: item.name,
       slug: item.slug,
       description: item.description,
       priceCents: item.priceCents,
       price: item.priceCents / 100,
-      stock: item.stock,
+      stock: item.variants
+        .filter((variant) => variant.isActive)
+        .reduce((sum, variant) => sum + variant.stock, 0),
       isActive: item.isActive,
       imageUrl: item.imageUrl,
       createdAt: item.createdAt,

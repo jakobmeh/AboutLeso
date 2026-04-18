@@ -30,19 +30,28 @@ async function getOrCreateCartId(userId: string) {
 
 export async function addToCart(formData: FormData) {
   const userId = await requireUserId();
-  const productIdParsed = z.string().min(1).safeParse(formData.get("productId"));
+  const variantIdParsed = z.string().min(1).safeParse(formData.get("variantId"));
   const quantityParsed = z.coerce.number().int().min(1).max(99).safeParse(formData.get("quantity") ?? "1");
 
-  if (!productIdParsed.success || !quantityParsed.success) {
+  if (!variantIdParsed.success || !quantityParsed.success) {
     throw new Error("Invalid cart input.");
   }
 
-  const product = await prisma.product.findUnique({
-    where: { id: productIdParsed.data },
-    select: { id: true, stock: true, isActive: true },
+  const variant = await prisma.productVariant.findUnique({
+    where: { id: variantIdParsed.data },
+    select: {
+      id: true,
+      stock: true,
+      isActive: true,
+      product: {
+        select: {
+          isActive: true,
+        },
+      },
+    },
   });
 
-  if (!product || !product.isActive || product.stock <= 0) {
+  if (!variant || !variant.isActive || !variant.product.isActive || variant.stock <= 0) {
     throw new Error("Product is not available.");
   }
 
@@ -51,17 +60,17 @@ export async function addToCart(formData: FormData) {
 
   const existing = await prisma.cartItem.findUnique({
     where: {
-      cartId_productId: {
+      cartId_variantId: {
         cartId,
-        productId: product.id,
+        variantId: variant.id,
       },
     },
     select: { id: true, quantity: true },
   });
 
   const cappedQuantity = existing
-    ? Math.min(existing.quantity + quantityToAdd, product.stock)
-    : Math.min(quantityToAdd, product.stock);
+    ? Math.min(existing.quantity + quantityToAdd, variant.stock)
+    : Math.min(quantityToAdd, variant.stock);
 
   if (existing) {
     await prisma.cartItem.update({
@@ -72,7 +81,7 @@ export async function addToCart(formData: FormData) {
     await prisma.cartItem.create({
       data: {
         cartId,
-        productId: product.id,
+        variantId: variant.id,
         quantity: cappedQuantity,
       },
     });
@@ -97,7 +106,7 @@ export async function updateCartItemQuantity(formData: FormData) {
       id: true,
       quantity: true,
       cart: { select: { userId: true } },
-      product: { select: { stock: true } },
+      variant: { select: { stock: true } },
     },
   });
 
@@ -108,7 +117,7 @@ export async function updateCartItemQuantity(formData: FormData) {
   if (quantityParsed.data === 0) {
     await prisma.cartItem.delete({ where: { id: item.id } });
   } else {
-    const capped = Math.min(quantityParsed.data, item.product.stock);
+    const capped = Math.min(quantityParsed.data, item.variant.stock);
     await prisma.cartItem.update({
       where: { id: item.id },
       data: { quantity: capped },

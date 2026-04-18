@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Role } from "@/app/generated/prisma/client";
 import { requireRole } from "@/lib/authz";
+import {
+  parseVariantStocksInput,
+  totalVariantStock,
+} from "@/lib/product-variants";
 import { prisma } from "@/lib/prisma";
 
 const IdSchema = z.string().trim().min(1, { message: "Invalid id." });
@@ -26,6 +30,7 @@ const CreateProductSchema = z.object({
     .refine((value) => Number.isInteger(Number(value)) && Number(value) >= 0, {
       message: "Invalid stock.",
     }),
+  variantStocks: z.string().trim().optional(),
   categoryId: IdSchema,
   seasonId: IdSchema,
   audienceId: IdSchema,
@@ -72,6 +77,7 @@ export async function createProduct(formData: FormData) {
     price: formData.get("price"),
     compareAtPrice: formData.get("compareAtPrice"),
     stock: formData.get("stock"),
+    variantStocks: formData.get("variantStocks"),
     categoryId: formData.get("categoryId"),
     seasonId: formData.get("seasonId"),
     audienceId: formData.get("audienceId"),
@@ -81,13 +87,30 @@ export async function createProduct(formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  const { name, description, price, compareAtPrice, stock, categoryId, seasonId, audienceId } = parsed.data;
+  const {
+    name,
+    description,
+    price,
+    compareAtPrice,
+    stock,
+    variantStocks,
+    categoryId,
+    seasonId,
+    audienceId,
+  } = parsed.data;
   const slug = await makeUniqueProductSlug(name);
   const priceCents = Math.round(Number(price) * 100);
   const compareAtPriceCents =
     compareAtPrice && Number(compareAtPrice) > Number(price)
       ? Math.round(Number(compareAtPrice) * 100)
       : null;
+  let variantList: ReturnType<typeof parseVariantStocksInput>;
+  try {
+    variantList = parseVariantStocksInput(variantStocks ?? "", Number(stock));
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : "Invalid variant sizes.");
+  }
+  const stockTotal = totalVariantStock(variantList);
 
   await prisma.product.create({
     data: {
@@ -96,11 +119,20 @@ export async function createProduct(formData: FormData) {
       description: description || null,
       priceCents,
       compareAtPriceCents,
-      stock: Number(stock),
+      stock: stockTotal,
       categoryId,
       seasonId,
       audienceId,
       isActive: formData.get("isActive") === "on",
+      variants: {
+        createMany: {
+          data: variantList.map((variant) => ({
+            size: variant.size,
+            stock: variant.stock,
+            isActive: true,
+          })),
+        },
+      },
     },
   });
 
@@ -132,6 +164,7 @@ export async function updateProduct(formData: FormData) {
     price: formData.get("price"),
     compareAtPrice: formData.get("compareAtPrice"),
     stock: formData.get("stock"),
+    variantStocks: formData.get("variantStocks"),
     categoryId: formData.get("categoryId"),
     seasonId: formData.get("seasonId"),
     audienceId: formData.get("audienceId"),
@@ -141,28 +174,82 @@ export async function updateProduct(formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  const { id, name, description, price, compareAtPrice, stock, categoryId, seasonId, audienceId } = parsed.data;
+  const {
+    id,
+    name,
+    description,
+    price,
+    compareAtPrice,
+    stock,
+    variantStocks,
+    categoryId,
+    seasonId,
+    audienceId,
+  } = parsed.data;
   const slug = await makeUniqueProductSlug(name, id);
   const priceCents = Math.round(Number(price) * 100);
   const compareAtPriceCents =
     compareAtPrice && Number(compareAtPrice) > Number(price)
       ? Math.round(Number(compareAtPrice) * 100)
       : null;
+  let variantList: ReturnType<typeof parseVariantStocksInput>;
+  try {
+    variantList = parseVariantStocksInput(variantStocks ?? "", Number(stock));
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : "Invalid variant sizes.");
+  }
+  const stockTotal = totalVariantStock(variantList);
 
-  await prisma.product.update({
-    where: { id },
-    data: {
-      name,
-      slug,
-      description: description || null,
-      priceCents,
-      compareAtPriceCents,
-      stock: Number(stock),
-      categoryId,
-      seasonId,
-      audienceId,
-      isActive: formData.get("isActive") === "on",
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.product.update({
+      where: { id },
+      data: {
+        name,
+        slug,
+        description: description || null,
+        priceCents,
+        compareAtPriceCents,
+        stock: stockTotal,
+        categoryId,
+        seasonId,
+        audienceId,
+        isActive: formData.get("isActive") === "on",
+      },
+    });
+
+    const sizes = variantList.map((variant) => variant.size);
+
+    await tx.productVariant.updateMany({
+      where: {
+        productId: id,
+        size: { notIn: sizes },
+      },
+      data: {
+        stock: 0,
+        isActive: false,
+      },
+    });
+
+    for (const variant of variantList) {
+      await tx.productVariant.upsert({
+        where: {
+          productId_size: {
+            productId: id,
+            size: variant.size,
+          },
+        },
+        create: {
+          productId: id,
+          size: variant.size,
+          stock: variant.stock,
+          isActive: true,
+        },
+        update: {
+          stock: variant.stock,
+          isActive: true,
+        },
+      });
+    }
   });
 
   revalidatePath("/admin");

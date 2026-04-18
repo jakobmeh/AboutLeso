@@ -15,6 +15,7 @@ const transporter = nodemailer.createTransport({
 
 type OrderEmailItem = {
   productName: string;
+  productSize?: string | null;
   quantity: number;
   unitPriceCents: number;
   lineTotalCents: number;
@@ -113,7 +114,9 @@ export async function sendOrderConfirmationEmail(
     .map(
       (item) => `
         <tr>
-          <td style="padding: 10px 8px; border-bottom: 1px solid #eee;">${escapeHtml(item.productName)}</td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #eee;">${escapeHtml(item.productName)}${
+            item.productSize ? ` <span style="color:#6b7280;">(${escapeHtml(item.productSize)})</span>` : ""
+          }</td>
           <td style="padding: 10px 8px; border-bottom: 1px solid #eee; text-align: right;">${item.quantity}</td>
           <td style="padding: 10px 8px; border-bottom: 1px solid #eee; text-align: right;">${formatPrice(item.unitPriceCents)}</td>
           <td style="padding: 10px 8px; border-bottom: 1px solid #eee; text-align: right;">${formatPrice(item.lineTotalCents)}</td>

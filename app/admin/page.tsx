@@ -19,6 +19,7 @@ import {
   searchCreatorUser,
 } from "@/app/actions/admin-creator";
 import { requireRole } from "@/lib/authz";
+import { formatVariantStocks, totalVariantStock } from "@/lib/product-variants";
 import { prisma } from "@/lib/prisma";
 import { Fragment } from "react";
 
@@ -35,6 +36,7 @@ type ProductRow = {
   priceCents: number;
   compareAtPriceCents: number | null;
   stock: number;
+  variants: { id: string; size: string; stock: number; isActive: boolean }[];
   categoryId: string;
   seasonId: string;
   audienceId: string;
@@ -185,7 +187,13 @@ function ProductSection({
             step="1"
             required
             defaultValue={0}
-            placeholder="Stock"
+            placeholder="Privzeta zaloga (UNI)"
+            className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
+          />
+          <input
+            type="text"
+            name="variantStocks"
+            placeholder="Velikosti npr. XS:4,S:8,M:10,L:3"
             className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
           />
           <select
@@ -251,7 +259,7 @@ function ProductSection({
             <tr className="border-b border-stone-200 text-stone-500">
               <th className="py-2 pr-4 font-medium">Name</th>
               <th className="py-2 pr-4 font-medium">Price</th>
-              <th className="py-2 pr-4 font-medium">Stock</th>
+              <th className="py-2 pr-4 font-medium">Velikosti/Zaloga</th>
               <th className="py-2 pr-4 font-medium">Category</th>
               <th className="py-2 pr-4 font-medium">Season</th>
               <th className="py-2 pr-4 font-medium">Audience</th>
@@ -272,7 +280,10 @@ function ProductSection({
                   <tr className="border-b border-stone-100">
                     <td className="py-3 pr-4 text-stone-800">{item.name}</td>
                     <td className="py-3 pr-4 text-stone-700">{formatPrice(item.priceCents)}</td>
-                    <td className="py-3 pr-4 text-stone-700">{item.stock}</td>
+                    <td className="py-3 pr-4 text-stone-700">
+                      <p className="font-medium">Skupaj: {totalVariantStock(item.variants)}</p>
+                      <p className="text-xs text-stone-500">{formatVariantStocks(item.variants)}</p>
+                    </td>
                     <td className="py-3 pr-4 text-stone-700">{item.category.name}</td>
                     <td className="py-3 pr-4 text-stone-700">{item.season.name}</td>
                     <td className="py-3 pr-4 text-stone-700">{item.audience.name}</td>
@@ -312,7 +323,7 @@ function ProductSection({
                   </tr>
                   <tr className="border-b border-stone-100 bg-stone-50">
                     <td colSpan={8} className="px-3 py-3">
-                      <form action={updateProduct} className="grid grid-cols-1 gap-2 md:grid-cols-6">
+                      <form action={updateProduct} className="grid grid-cols-1 gap-2 md:grid-cols-7">
                         <input type="hidden" name="id" value={item.id} />
                         <input
                           type="text"
@@ -345,8 +356,15 @@ function ProductSection({
                           name="stock"
                           min="0"
                           step="1"
-                          defaultValue={item.stock}
+                          defaultValue={totalVariantStock(item.variants)}
                           required
+                          className="border border-stone-300 px-2 py-1 text-xs text-stone-800 outline-none focus:border-stone-600"
+                        />
+                        <input
+                          type="text"
+                          name="variantStocks"
+                          defaultValue={formatVariantStocks(item.variants)}
+                          placeholder="S:5,M:8,L:3"
                           className="border border-stone-300 px-2 py-1 text-xs text-stone-800 outline-none focus:border-stone-600"
                         />
                         <select
@@ -390,7 +408,7 @@ function ProductSection({
                           rows={2}
                           defaultValue={item.description ?? ""}
                           placeholder="Description"
-                          className="md:col-span-5 border border-stone-300 px-2 py-1 text-xs text-stone-800 outline-none focus:border-stone-600"
+                          className="md:col-span-6 border border-stone-300 px-2 py-1 text-xs text-stone-800 outline-none focus:border-stone-600"
                         />
                         <label className="flex items-center gap-2 text-xs text-stone-700">
                           <input type="checkbox" name="isActive" defaultChecked={item.isActive} />
@@ -439,6 +457,10 @@ export default async function AdminPage({
         category: { select: { name: true } },
         season: { select: { name: true } },
         audience: { select: { name: true } },
+        variants: {
+          select: { id: true, size: true, stock: true, isActive: true },
+          orderBy: { size: "asc" },
+        },
       },
     }),
     prisma.creatorCode.findMany({

@@ -67,6 +67,7 @@ export async function GET(
       },
       items: order.items.map((item: (typeof order.items)[0]) => ({
         productName: item.productName,
+        productSize: item.productSize,
         quantity: item.quantity,
         unitPriceCents: item.unitPriceCents,
         lineTotalCents: item.lineTotalCents,

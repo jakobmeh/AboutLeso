@@ -67,13 +67,20 @@ export async function checkoutFromCart(formData: FormData) {
       include: {
         items: {
           include: {
-            product: {
+            variant: {
               select: {
                 id: true,
-                name: true,
-                priceCents: true,
+                size: true,
                 stock: true,
                 isActive: true,
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    priceCents: true,
+                    isActive: true,
+                  },
+                },
               },
             },
           },
@@ -86,17 +93,20 @@ export async function checkoutFromCart(formData: FormData) {
     }
 
     for (const item of cart.items) {
-      if (!item.product.isActive) {
-        throw new Error(`Product ${item.product.name} is inactive.`);
+      if (!item.variant.product.isActive) {
+        throw new Error(`Product ${item.variant.product.name} is inactive.`);
       }
-      if (item.product.stock < item.quantity) {
-        throw new Error(`Not enough stock for ${item.product.name}.`);
+      if (!item.variant.isActive) {
+        throw new Error(`Size ${item.variant.size} for ${item.variant.product.name} is inactive.`);
+      }
+      if (item.variant.stock < item.quantity) {
+        throw new Error(`Not enough stock for ${item.variant.product.name} (${item.variant.size}).`);
       }
     }
 
     type CartItemType = (typeof cart.items)[number];
     const subtotalCents = cart.items.reduce(
-      (sum: number, item: CartItemType) => sum + item.product.priceCents * item.quantity,
+      (sum: number, item: CartItemType) => sum + item.variant.product.priceCents * item.quantity,
       0
     );
 
@@ -142,17 +152,23 @@ export async function checkoutFromCart(formData: FormData) {
     await tx.orderItem.createMany({
       data: cart.items.map((item: CartItemType) => ({
         orderId: order.id,
-        productId: item.product.id,
-        productName: item.product.name,
-        unitPriceCents: item.product.priceCents,
+        productId: item.variant.product.id,
+        productVariantId: item.variant.id,
+        productName: item.variant.product.name,
+        productSize: item.variant.size,
+        unitPriceCents: item.variant.product.priceCents,
         quantity: item.quantity,
-        lineTotalCents: item.product.priceCents * item.quantity,
+        lineTotalCents: item.variant.product.priceCents * item.quantity,
       })),
     });
 
     for (const item of cart.items) {
+      await tx.productVariant.update({
+        where: { id: item.variant.id },
+        data: { stock: { decrement: item.quantity } },
+      });
       await tx.product.update({
-        where: { id: item.product.id },
+        where: { id: item.variant.product.id },
         data: { stock: { decrement: item.quantity } },
       });
     }
@@ -180,10 +196,11 @@ export async function checkoutFromCart(formData: FormData) {
         phone: shippingAddress.phone,
       },
       items: cart.items.map((item: CartItemType) => ({
-        productName: item.product.name,
+        productName: item.variant.product.name,
+        productSize: item.variant.size,
         quantity: item.quantity,
-        unitPriceCents: item.product.priceCents,
-        lineTotalCents: item.product.priceCents * item.quantity,
+        unitPriceCents: item.variant.product.priceCents,
+        lineTotalCents: item.variant.product.priceCents * item.quantity,
       })),
     };
   });

@@ -121,3 +121,8 @@ export type CreatorCode = Prisma.CreatorCodeModel
  * 
  */
 export type OrderItem = Prisma.OrderItemModel
+/**
+ * Model ProductVariant
+ * 
+ */
+export type ProductVariant = Prisma.ProductVariantModel

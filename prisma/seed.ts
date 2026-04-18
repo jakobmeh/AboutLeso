@@ -17,7 +17,9 @@ async function main() {
   const noImageProducts = await prisma.product.findMany({ where: { imageUrl: null }, select: { id: true } });
   const noImageIds = noImageProducts.map((p: { id: string }) => p.id);
   if (noImageIds.length > 0) {
-    await prisma.cartItem.deleteMany({ where: { productId: { in: noImageIds } } });
+    await prisma.cartItem.deleteMany({
+      where: { variant: { productId: { in: noImageIds } } },
+    });
   }
   const deleted = await prisma.product.deleteMany({ where: { imageUrl: null } });
   console.log(`Deleted ${deleted.count} products without images.`);
@@ -441,9 +443,39 @@ async function main() {
         where: { slug: p.slug },
         data: { imageUrl: p.imageUrl, stock: p.stock, priceCents: p.priceCents, compareAtPriceCents: p.compareAtPriceCents, isActive: true },
       });
+      await prisma.productVariant.upsert({
+        where: {
+          productId_size: {
+            productId: existing.id,
+            size: "UNI",
+          },
+        },
+        create: {
+          productId: existing.id,
+          size: "UNI",
+          stock: p.stock,
+          isActive: true,
+        },
+        update: {
+          stock: p.stock,
+          isActive: true,
+        },
+      });
       updated++;
     } else {
-      await prisma.product.create({ data: { ...p, isActive: true } });
+      await prisma.product.create({
+        data: {
+          ...p,
+          isActive: true,
+          variants: {
+            create: {
+              size: "UNI",
+              stock: p.stock,
+              isActive: true,
+            },
+          },
+        },
+      });
       created++;
     }
   }
