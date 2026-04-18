@@ -98,8 +98,8 @@ export async function GET(request: NextRequest) {
       priceCents: item.priceCents,
       price: item.priceCents / 100,
       stock: item.variants
-        .filter((variant) => variant.isActive)
-        .reduce((sum, variant) => sum + variant.stock, 0),
+        .filter((variant: { id: string; size: string; stock: number; isActive: boolean }) => variant.isActive)
+        .reduce((sum: number, variant: { id: string; size: string; stock: number; isActive: boolean }) => sum + variant.stock, 0),
       isActive: item.isActive,
       imageUrl: item.imageUrl,
       createdAt: item.createdAt,
