@@ -30,7 +30,7 @@ async function getOrCreateCartId(userId: string) {
 
 export async function addToCart(formData: FormData) {
   const userId = await requireUserId();
-  const productIdParsed = z.string().cuid().safeParse(formData.get("productId"));
+  const productIdParsed = z.string().min(1).safeParse(formData.get("productId"));
   const quantityParsed = z.coerce.number().int().min(1).max(99).safeParse(formData.get("quantity") ?? "1");
 
   if (!productIdParsed.success || !quantityParsed.success) {
@@ -84,7 +84,7 @@ export async function addToCart(formData: FormData) {
 
 export async function updateCartItemQuantity(formData: FormData) {
   const userId = await requireUserId();
-  const itemIdParsed = z.string().cuid().safeParse(formData.get("itemId"));
+  const itemIdParsed = z.string().min(1).safeParse(formData.get("itemId"));
   const quantityParsed = z.coerce.number().int().min(0).max(99).safeParse(formData.get("quantity"));
 
   if (!itemIdParsed.success || !quantityParsed.success) {
@@ -121,7 +121,7 @@ export async function updateCartItemQuantity(formData: FormData) {
 
 export async function removeCartItem(formData: FormData) {
   const userId = await requireUserId();
-  const itemIdParsed = z.string().cuid().safeParse(formData.get("itemId"));
+  const itemIdParsed = z.string().min(1).safeParse(formData.get("itemId"));
 
   if (!itemIdParsed.success) {
     throw new Error("Invalid item id.");

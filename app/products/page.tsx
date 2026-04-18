@@ -14,32 +14,21 @@ function single(value: string | string[] | undefined) {
 }
 
 const ORDER_BY_NEWEST: ProductOrderBy = [{ createdAt: "desc" as const }];
-const ORDER_BY_PRICE_ASC: ProductOrderBy = [
-  { priceCents: "asc" as const },
-  { createdAt: "desc" as const },
-];
-const ORDER_BY_PRICE_DESC: ProductOrderBy = [
-  { priceCents: "desc" as const },
-  { createdAt: "desc" as const },
-];
+const ORDER_BY_PRICE_ASC: ProductOrderBy = [{ priceCents: "asc" as const }, { createdAt: "desc" as const }];
+const ORDER_BY_PRICE_DESC: ProductOrderBy = [{ priceCents: "desc" as const }, { createdAt: "desc" as const }];
 const ORDER_BY_NAME_ASC: ProductOrderBy = [{ name: "asc" as const }, { createdAt: "desc" as const }];
 
 function getOrderBy(sort: string) {
   switch (sort) {
-    case "price_asc":
-      return ORDER_BY_PRICE_ASC;
-    case "price_desc":
-      return ORDER_BY_PRICE_DESC;
-    case "name_asc":
-      return ORDER_BY_NAME_ASC;
-    case "newest":
-    default:
-      return ORDER_BY_NEWEST;
+    case "price_asc": return ORDER_BY_PRICE_ASC;
+    case "price_desc": return ORDER_BY_PRICE_DESC;
+    case "name_asc": return ORDER_BY_NAME_ASC;
+    default: return ORDER_BY_NEWEST;
   }
 }
 
 function formatPrice(cents: number) {
-  return `${(cents / 100).toFixed(2)} EUR`;
+  return new Intl.NumberFormat("sl-SI", { style: "currency", currency: "EUR" }).format(cents / 100);
 }
 
 export default async function ProductsPage({
@@ -57,7 +46,6 @@ export default async function ProductsPage({
   const sort = single(resolved.sort).trim() || "newest";
 
   const where: ProductWhere = { isActive: true };
-
   if (q) {
     where.OR = [
       { name: { contains: q, mode: "insensitive" } },
@@ -83,158 +71,184 @@ export default async function ProductsPage({
     prisma.audience.findMany({ orderBy: { name: "asc" } }),
   ]);
 
+  const hasFilters = q || categoryId || seasonId || audienceId;
+
   return (
-    <div className="min-h-screen bg-stone-50 px-6 py-12">
-      <main className="mx-auto max-w-6xl space-y-6">
-        <section className="rounded border border-stone-200 bg-white p-8">
-          <h1 className="text-2xl font-light tracking-[0.2em] uppercase text-stone-800">
-            Products
-          </h1>
-          <p className="mt-3 text-sm text-stone-600">Public catalog with search and filters.</p>
-          <div className="mt-4 flex gap-2">
-            {session?.user ? (
-              <Link
-                href="/cart"
-                className="border border-stone-300 px-4 py-2 text-xs tracking-widest uppercase text-stone-600 hover:text-stone-800"
-              >
-                Open cart
-              </Link>
+    <div className="min-h-screen bg-white">
+      {/* Page header */}
+      <div className="border-b border-stone-200 bg-stone-50">
+        <div className="mx-auto max-w-7xl px-6 py-8">
+          <h1 className="text-3xl font-light tracking-wide text-stone-900">Katalog</h1>
+          <p className="mt-1 text-sm text-stone-500">
+            {products.length} {products.length === 1 ? "izdelek" : "izdelkov"}
+            {hasFilters ? " (filtrirano)" : ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <div className="flex flex-col gap-8 lg:flex-row">
+          {/* Filters sidebar */}
+          <aside className="w-full lg:w-56 shrink-0">
+            <form method="get" className="space-y-6">
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-stone-400 mb-2">Iskanje</label>
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Ime izdelka..."
+                  className="w-full border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-700 bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-stone-400 mb-2">Kategorija</label>
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="categoryId" value="" defaultChecked={!categoryId} className="accent-stone-800" />
+                    <span className="text-sm text-stone-600">Vse</span>
+                  </label>
+                  {categories.map((item) => (
+                    <label key={item.id} className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="categoryId" value={item.id} defaultChecked={categoryId === item.id} className="accent-stone-800" />
+                      <span className="text-sm text-stone-600">{item.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-stone-400 mb-2">Sezona</label>
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="seasonId" value="" defaultChecked={!seasonId} className="accent-stone-800" />
+                    <span className="text-sm text-stone-600">Vse</span>
+                  </label>
+                  {seasons.map((item) => (
+                    <label key={item.id} className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="seasonId" value={item.id} defaultChecked={seasonId === item.id} className="accent-stone-800" />
+                      <span className="text-sm text-stone-600">{item.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-stone-400 mb-2">Za koga</label>
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="audienceId" value="" defaultChecked={!audienceId} className="accent-stone-800" />
+                    <span className="text-sm text-stone-600">Vse</span>
+                  </label>
+                  {audiences.map((item) => (
+                    <label key={item.id} className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="audienceId" value={item.id} defaultChecked={audienceId === item.id} className="accent-stone-800" />
+                      <span className="text-sm text-stone-600">{item.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs tracking-widest uppercase text-stone-400 mb-2">Razvrsti po</label>
+                <select
+                  name="sort"
+                  defaultValue={sort}
+                  className="w-full border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-700 bg-white"
+                >
+                  <option value="newest">Najnovejši</option>
+                  <option value="price_asc">Cena: najnižja</option>
+                  <option value="price_desc">Cena: najvišja</option>
+                  <option value="name_asc">Ime A–Ž</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  type="submit"
+                  className="w-full bg-stone-900 py-2 text-xs tracking-widest uppercase text-white hover:bg-stone-700 transition-colors"
+                >
+                  Filtriraj
+                </button>
+                {hasFilters && (
+                  <Link
+                    href="/products"
+                    className="w-full border border-stone-300 py-2 text-center text-xs tracking-widest uppercase text-stone-600 hover:border-stone-600 hover:text-stone-900 transition-colors"
+                  >
+                    Ponastavi
+                  </Link>
+                )}
+              </div>
+            </form>
+          </aside>
+
+          {/* Product grid */}
+          <div className="flex-1">
+            {products.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-32 text-center">
+                <p className="text-stone-400 text-sm">Ni izdelkov za te filtre.</p>
+                <Link href="/products" className="mt-4 text-xs tracking-widest uppercase underline underline-offset-4 text-stone-500 hover:text-stone-800">
+                  Ponastavi filtre
+                </Link>
+              </div>
             ) : (
-              <Link
-                href="/login"
-                className="border border-stone-300 px-4 py-2 text-xs tracking-widest uppercase text-stone-600 hover:text-stone-800"
-              >
-                Login to buy
-              </Link>
+              <div className="grid grid-cols-2 gap-px bg-stone-200 md:grid-cols-3">
+                {products.map((item) => (
+                  <article key={item.id} className="group bg-white p-5 hover:bg-stone-50 transition-colors">
+                    <div className="mb-4 aspect-[3/4] bg-stone-100 overflow-hidden">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <span className="text-xs tracking-widest uppercase text-stone-300">Leso</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs tracking-widest uppercase text-stone-400">{item.category.name} · {item.season.name}</p>
+                    <h2 className="mt-1 text-sm font-medium text-stone-900 leading-snug">{item.name}</h2>
+                    {item.description && (
+                      <p className="mt-1 text-xs text-stone-500 line-clamp-2">{item.description}</p>
+                    )}
+                    <div className="mt-3 flex items-center justify-between">
+                      <p className="text-sm font-medium text-stone-800">{formatPrice(item.priceCents)}</p>
+                      <span className={`text-xs tracking-widest uppercase ${item.stock > 0 ? "text-green-600" : "text-red-400"}`}>
+                        {item.stock > 0 ? `${item.stock} kos` : "Razprodano"}
+                      </span>
+                    </div>
+
+                    {item.stock > 0 ? (
+                      session?.user ? (
+                        <form action={addToCart} className="mt-4">
+                          <input type="hidden" name="productId" value={item.id} />
+                          <input type="hidden" name="quantity" value="1" />
+                          <button
+                            type="submit"
+                            className="w-full border border-stone-300 py-2 text-xs tracking-widest uppercase text-stone-600 hover:border-stone-900 hover:bg-stone-900 hover:text-white transition-all"
+                          >
+                            Dodaj v košarico
+                          </button>
+                        </form>
+                      ) : (
+                        <Link
+                          href="/login"
+                          className="mt-4 block w-full border border-stone-300 py-2 text-center text-xs tracking-widest uppercase text-stone-500 hover:border-stone-900 hover:text-stone-900 transition-colors"
+                        >
+                          Prijavi se za nakup
+                        </Link>
+                      )
+                    ) : (
+                      <div className="mt-4 w-full border border-stone-200 py-2 text-center text-xs tracking-widest uppercase text-stone-300">
+                        Ni na zalogi
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
             )}
           </div>
-        </section>
-
-        <section className="rounded border border-stone-200 bg-white p-6">
-          <form method="get" className="grid grid-cols-1 gap-3 md:grid-cols-5">
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="Search products..."
-              className="md:col-span-2 border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
-            />
-            <select
-              name="categoryId"
-              defaultValue={categoryId}
-              className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
-            >
-              <option value="">All categories</option>
-              {categories.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-            <select
-              name="seasonId"
-              defaultValue={seasonId}
-              className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
-            >
-              <option value="">All seasons</option>
-              {seasons.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-            <select
-              name="audienceId"
-              defaultValue={audienceId}
-              className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
-            >
-              <option value="">All audiences</option>
-              {audiences.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-            <select
-              name="sort"
-              defaultValue={sort}
-              className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
-            >
-              <option value="newest">Newest</option>
-              <option value="price_asc">Price low to high</option>
-              <option value="price_desc">Price high to low</option>
-              <option value="name_asc">Name A-Z</option>
-            </select>
-            <div className="flex gap-2 md:col-span-5">
-              <button
-                type="submit"
-                className="bg-stone-800 px-4 py-2 text-xs tracking-widest uppercase text-white hover:bg-stone-900"
-              >
-                Apply filters
-              </button>
-              <Link
-                href="/products"
-                className="border border-stone-300 px-4 py-2 text-xs tracking-widest uppercase text-stone-600 hover:text-stone-800"
-              >
-                Reset
-              </Link>
-            </div>
-          </form>
-        </section>
-
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {products.length === 0 ? (
-            <div className="rounded border border-stone-200 bg-white p-6 text-stone-500">
-              No products found for these filters.
-            </div>
-          ) : (
-            products.map((item) => (
-              <article key={item.id} className="rounded border border-stone-200 bg-white p-5">
-                <h2 className="text-lg font-medium text-stone-800">{item.name}</h2>
-                <p className="mt-1 text-sm text-stone-500">{formatPrice(item.priceCents)}</p>
-                <p className="mt-3 text-sm text-stone-600">
-                  {item.description || "No description yet."}
-                </p>
-                <p className="mt-3 text-xs uppercase tracking-widest text-stone-500">
-                  {item.category.name} · {item.season.name} · {item.audience.name}
-                </p>
-                <p
-                  className={
-                    item.stock > 0
-                      ? "mt-3 text-xs uppercase tracking-widest text-green-700"
-                      : "mt-3 text-xs uppercase tracking-widest text-red-700"
-                  }
-                >
-                  {item.stock > 0 ? `In stock (${item.stock})` : "Out of stock"}
-                </p>
-                {item.stock > 0 && (
-                  <>
-                    {session?.user ? (
-                      <form action={addToCart} className="mt-4">
-                        <input type="hidden" name="productId" value={item.id} />
-                        <input type="hidden" name="quantity" value="1" />
-                        <button
-                          type="submit"
-                          className="bg-stone-800 px-3 py-2 text-xs tracking-widest uppercase text-white hover:bg-stone-900"
-                        >
-                          Add to cart
-                        </button>
-                      </form>
-                    ) : (
-                      <Link
-                        href="/login"
-                        className="mt-4 inline-block border border-stone-300 px-3 py-2 text-xs tracking-widest uppercase text-stone-600 hover:text-stone-800"
-                      >
-                        Login to add
-                      </Link>
-                    )}
-                  </>
-                )}
-              </article>
-            ))
-          )}
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

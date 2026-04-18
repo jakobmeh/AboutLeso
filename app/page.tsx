@@ -3,157 +3,171 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 function formatPrice(cents: number) {
-  return `${(cents / 100).toFixed(2)} EUR`;
+  return new Intl.NumberFormat("sl-SI", { style: "currency", currency: "EUR" }).format(cents / 100);
 }
 
 export default async function HomePage() {
   const session = await auth();
 
-  const [activeProductsCount, categoryCount, audienceCount, categories, seasons, latestProducts] =
-    await Promise.all([
-      prisma.product.count({ where: { isActive: true } }),
-      prisma.category.count(),
-      prisma.audience.count(),
-      prisma.category.findMany({ orderBy: { name: "asc" }, take: 6 }),
-      prisma.season.findMany({ orderBy: { name: "asc" }, take: 4 }),
-      prisma.product.findMany({
-        where: { isActive: true },
-        orderBy: { createdAt: "desc" },
-        take: 6,
-        include: {
-          category: { select: { id: true, name: true } },
-          season: { select: { id: true, name: true } },
-          audience: { select: { id: true, name: true } },
-        },
-      }),
-    ]);
+  const [categories, seasons, latestProducts] = await Promise.all([
+    prisma.category.findMany({ orderBy: { name: "asc" }, take: 6 }),
+    prisma.season.findMany({ orderBy: { name: "asc" }, take: 4 }),
+    prisma.product.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      include: {
+        category: { select: { name: true } },
+        season: { select: { name: true } },
+        audience: { select: { name: true } },
+      },
+    }),
+  ]);
 
   return (
-    <div className="min-h-screen bg-stone-50 px-6 py-10">
-      <main className="mx-auto w-full max-w-6xl space-y-6">
-        <section className="rounded border border-stone-200 bg-white p-8">
-          <p className="text-xs uppercase tracking-[0.3em] text-stone-500">Leso Store</p>
-          <h1 className="mt-3 text-3xl font-light tracking-[0.08em] text-stone-900">
-            Spletna trgovina z oblacili za vse sezone
+    <div className="min-h-screen bg-white">
+      {/* Hero */}
+      <section className="bg-stone-900 text-white">
+        <div className="mx-auto max-w-7xl px-6 py-28 md:py-40">
+          <p className="text-xs tracking-[0.4em] uppercase text-stone-400">Nova kolekcija 2026</p>
+          <h1 className="mt-4 max-w-2xl text-5xl font-light leading-tight tracking-tight md:text-7xl">
+            Oblačila za vsako sezono
           </h1>
-          <p className="mt-4 max-w-3xl text-sm text-stone-600">
-            Izberi izdelke po kategoriji, sezoni in ciljni skupini. Vse je povezano z bazo, zato
-            je katalog vedno aktualen.
+          <p className="mt-6 max-w-md text-sm leading-relaxed text-stone-400">
+            Odkrijte našo kolekcijo oblačil, skrbno izbranih za vsak stil in vsako priložnost.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-10 flex flex-wrap gap-4">
             <Link
               href="/products"
-              className="bg-stone-800 px-4 py-2 text-xs uppercase tracking-widest text-white hover:bg-stone-900"
+              className="bg-white px-8 py-3 text-xs tracking-widest uppercase text-stone-900 hover:bg-stone-100 transition-colors"
             >
-              Odpri katalog
+              Oglejte si katalog
             </Link>
-            {session?.user ? (
-              <Link
-                href="/dashboard"
-                className="border border-stone-300 px-4 py-2 text-xs uppercase tracking-widest text-stone-600 hover:text-stone-800"
-              >
-                Moj dashboard
-              </Link>
-            ) : (
+            {!session?.user && (
               <Link
                 href="/register"
-                className="border border-stone-300 px-4 py-2 text-xs uppercase tracking-widest text-stone-600 hover:text-stone-800"
+                className="border border-stone-600 px-8 py-3 text-xs tracking-widest uppercase text-stone-300 hover:border-stone-400 hover:text-white transition-colors"
               >
-                Ustvari racun
+                Ustvarite račun
               </Link>
             )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <article className="rounded border border-stone-200 bg-white p-6">
-            <p className="text-xs uppercase tracking-widest text-stone-500">Aktivni izdelki</p>
-            <p className="mt-2 text-3xl font-light text-stone-900">{activeProductsCount}</p>
-          </article>
-          <article className="rounded border border-stone-200 bg-white p-6">
-            <p className="text-xs uppercase tracking-widest text-stone-500">Kategorije</p>
-            <p className="mt-2 text-3xl font-light text-stone-900">{categoryCount}</p>
-          </article>
-          <article className="rounded border border-stone-200 bg-white p-6">
-            <p className="text-xs uppercase tracking-widest text-stone-500">Ciljne skupine</p>
-            <p className="mt-2 text-3xl font-light text-stone-900">{audienceCount}</p>
-          </article>
-        </section>
-
-        <section className="rounded border border-stone-200 bg-white p-6">
-          <h2 className="text-lg font-medium text-stone-900">Hitri filtri</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-widest text-stone-500">Kategorije</p>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/products?categoryId=${category.id}`}
-                    className="border border-stone-300 px-3 py-1 text-xs uppercase tracking-widest text-stone-600 hover:text-stone-800"
-                  >
-                    {category.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-widest text-stone-500">Sezone</p>
-              <div className="flex flex-wrap gap-2">
-                {seasons.map((season) => (
-                  <Link
-                    key={season.id}
-                    href={`/products?seasonId=${season.id}`}
-                    className="border border-stone-300 px-3 py-1 text-xs uppercase tracking-widest text-stone-600 hover:text-stone-800"
-                  >
-                    {season.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-stone-900">Najnovejsi izdelki</h2>
-            <Link
-              href="/products"
-              className="text-xs uppercase tracking-widest text-stone-500 hover:text-stone-800"
-            >
-              Poglej vse
-            </Link>
-          </div>
-
-          {latestProducts.length === 0 ? (
-            <div className="rounded border border-stone-200 bg-white p-6 text-stone-500">
-              Trenutno ni aktivnih izdelkov.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {latestProducts.map((product) => (
-                <article key={product.id} className="rounded border border-stone-200 bg-white p-5">
-                  <p className="text-xs uppercase tracking-widest text-stone-500">
-                    {product.category.name} · {product.season.name} · {product.audience.name}
-                  </p>
-                  <h3 className="mt-2 text-lg font-medium text-stone-900">{product.name}</h3>
-                  <p className="mt-2 text-sm text-stone-600">{product.description || "Brez opisa."}</p>
-                  <p className="mt-3 text-sm font-medium text-stone-900">{formatPrice(product.priceCents)}</p>
-                  <p
-                    className={
-                      product.stock > 0
-                        ? "mt-2 text-xs uppercase tracking-widest text-green-700"
-                        : "mt-2 text-xs uppercase tracking-widest text-red-700"
-                    }
-                  >
-                    {product.stock > 0 ? `Na zalogi: ${product.stock}` : "Ni na zalogi"}
-                  </p>
-                </article>
+      {/* Kategorije */}
+      {categories.length > 0 && (
+        <section className="border-b border-stone-100 bg-stone-50">
+          <div className="mx-auto max-w-7xl px-6 py-10">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs tracking-widest uppercase text-stone-400 mr-2">Kategorije:</span>
+              {categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/products?categoryId=${cat.id}`}
+                  className="border border-stone-300 px-4 py-2 text-xs tracking-widest uppercase text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors"
+                >
+                  {cat.name}
+                </Link>
+              ))}
+              {seasons.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/products?seasonId=${s.id}`}
+                  className="border border-stone-300 px-4 py-2 text-xs tracking-widest uppercase text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors"
+                >
+                  {s.name}
+                </Link>
               ))}
             </div>
-          )}
+          </div>
         </section>
-      </main>
+      )}
+
+      {/* Novi izdelki */}
+      <section className="mx-auto max-w-7xl px-6 py-16">
+        <div className="mb-10 flex items-end justify-between">
+          <div>
+            <p className="text-xs tracking-widest uppercase text-stone-400">Sveže v katalogu</p>
+            <h2 className="mt-2 text-3xl font-light text-stone-900">Novi prihodi</h2>
+          </div>
+          <Link
+            href="/products"
+            className="text-xs tracking-widest uppercase text-stone-500 underline underline-offset-4 hover:text-stone-900 transition-colors"
+          >
+            Vse izdelke →
+          </Link>
+        </div>
+
+        {latestProducts.length === 0 ? (
+          <div className="py-20 text-center text-stone-400">
+            <p className="text-sm">Trenutno ni aktivnih izdelkov.</p>
+            <Link href="/products" className="mt-4 inline-block text-xs tracking-widest uppercase underline">
+              Poglej katalog
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-px bg-stone-200 md:grid-cols-3 lg:grid-cols-4">
+            {latestProducts.map((product) => (
+              <article key={product.id} className="group bg-white p-6 hover:bg-stone-50 transition-colors">
+                <div className="mb-4 aspect-[3/4] bg-stone-100 overflow-hidden">
+                  {product.imageUrl ? (
+                    <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center">
+                      <span className="text-xs tracking-widest uppercase text-stone-300">Leso</span>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs tracking-widest uppercase text-stone-400">
+                  {product.category.name}
+                </p>
+                <h3 className="mt-1 text-sm font-medium text-stone-900 leading-snug">{product.name}</h3>
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="text-sm text-stone-700">{formatPrice(product.priceCents)}</p>
+                  {product.stock === 0 && (
+                    <span className="text-xs tracking-widest uppercase text-red-400">Razprodano</span>
+                  )}
+                </div>
+                <Link
+                  href="/products"
+                  className="mt-4 block w-full border border-stone-300 py-2 text-center text-xs tracking-widest uppercase text-stone-600 opacity-0 group-hover:opacity-100 hover:border-stone-900 hover:text-stone-900 transition-all"
+                >
+                  {product.stock > 0 ? "Dodaj v košarico" : "Ni na zalogi"}
+                </Link>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* CTA banner */}
+      <section className="bg-stone-100">
+        <div className="mx-auto max-w-7xl px-6 py-20 text-center">
+          <h2 className="text-3xl font-light text-stone-900">Brezplačna dostava nad 80 €</h2>
+          <p className="mt-3 text-sm text-stone-500">Za vse naročila nad 80 € zagotavljamo brezplačno dostavo po Sloveniji.</p>
+          <Link
+            href="/products"
+            className="mt-8 inline-block bg-stone-900 px-10 py-3 text-xs tracking-widest uppercase text-white hover:bg-stone-700 transition-colors"
+          >
+            Nakupuj zdaj
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-stone-200 bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-10">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <span className="text-lg font-light tracking-[0.4em] uppercase text-stone-900">Leso</span>
+            <p className="text-xs text-stone-400">© 2026 Leso. Vse pravice pridržane.</p>
+            <div className="flex gap-6">
+              <Link href="/products" className="text-xs tracking-widest uppercase text-stone-400 hover:text-stone-700">Katalog</Link>
+              <Link href="/login" className="text-xs tracking-widest uppercase text-stone-400 hover:text-stone-700">Prijava</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

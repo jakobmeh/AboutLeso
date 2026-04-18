@@ -42,15 +42,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url === baseUrl || url === `${baseUrl}/`) {
+        return `${baseUrl}/dashboard`;
+      }
+      return url.startsWith(baseUrl) ? url : `${baseUrl}/dashboard`;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true },
+        });
+        token.role = dbUser?.role ?? "USER";
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     },
