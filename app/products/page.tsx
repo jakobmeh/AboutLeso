@@ -71,6 +71,8 @@ export default async function ProductsPage({
     prisma.audience.findMany({ orderBy: { name: "asc" } }),
   ]);
 
+  type ProductItem = (typeof products)[0];
+  type TaxItem = (typeof categories)[0];
   const hasFilters = q || categoryId || seasonId || audienceId;
 
   return (
@@ -109,7 +111,7 @@ export default async function ProductsPage({
                     <input type="radio" name="categoryId" value="" defaultChecked={!categoryId} className="accent-stone-800" />
                     <span className="text-sm text-stone-600">Vse</span>
                   </label>
-                  {categories.map((item) => (
+                  {categories.map((item: TaxItem) => (
                     <label key={item.id} className="flex items-center gap-2 cursor-pointer">
                       <input type="radio" name="categoryId" value={item.id} defaultChecked={categoryId === item.id} className="accent-stone-800" />
                       <span className="text-sm text-stone-600">{item.name}</span>
@@ -125,7 +127,7 @@ export default async function ProductsPage({
                     <input type="radio" name="seasonId" value="" defaultChecked={!seasonId} className="accent-stone-800" />
                     <span className="text-sm text-stone-600">Vse</span>
                   </label>
-                  {seasons.map((item) => (
+                  {seasons.map((item: TaxItem) => (
                     <label key={item.id} className="flex items-center gap-2 cursor-pointer">
                       <input type="radio" name="seasonId" value={item.id} defaultChecked={seasonId === item.id} className="accent-stone-800" />
                       <span className="text-sm text-stone-600">{item.name}</span>
@@ -141,7 +143,7 @@ export default async function ProductsPage({
                     <input type="radio" name="audienceId" value="" defaultChecked={!audienceId} className="accent-stone-800" />
                     <span className="text-sm text-stone-600">Vse</span>
                   </label>
-                  {audiences.map((item) => (
+                  {audiences.map((item: TaxItem) => (
                     <label key={item.id} className="flex items-center gap-2 cursor-pointer">
                       <input type="radio" name="audienceId" value={item.id} defaultChecked={audienceId === item.id} className="accent-stone-800" />
                       <span className="text-sm text-stone-600">{item.name}</span>
@@ -194,7 +196,7 @@ export default async function ProductsPage({
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-px bg-stone-200 md:grid-cols-3">
-                {products.map((item) => (
+                {products.map((item: ProductItem) => (
                   <article key={item.id} className="group bg-white p-5 hover:bg-stone-50 transition-colors">
                     <div className="mb-4 aspect-[3/4] bg-stone-100 overflow-hidden">
                       {item.imageUrl ? (

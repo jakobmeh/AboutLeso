@@ -49,6 +49,8 @@ export default async function OrdersPage({
     orderBy: { createdAt: "desc" },
     include: { items: { orderBy: { createdAt: "asc" } } },
   });
+  type Order = (typeof orders)[0];
+  type OrderItem = Order["items"][0];
 
   return (
     <div className="min-h-screen bg-white">
@@ -80,7 +82,7 @@ export default async function OrdersPage({
             </Link>
           </div>
         ) : (
-          orders.map((order) => (
+          orders.map((order: Order) => (
             <article key={order.id} className="border border-stone-200">
               {/* Order header */}
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-100 bg-stone-50 px-6 py-4">
@@ -106,7 +108,7 @@ export default async function OrdersPage({
 
               {/* Order items */}
               <div className="divide-y divide-stone-100 px-6">
-                {order.items.map((item) => (
+                {order.items.map((item: OrderItem) => (
                   <div key={item.id} className="flex items-center justify-between py-4">
                     <div>
                       <p className="text-sm text-stone-800">{item.productName}</p>

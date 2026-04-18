@@ -24,6 +24,10 @@ export default async function HomePage() {
     }),
   ]);
 
+  type CatItem = (typeof categories)[0];
+  type SeasonItem = (typeof seasons)[0];
+  type ProductItem = (typeof latestProducts)[0];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero */}
@@ -61,7 +65,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl px-6 py-10">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-xs tracking-widest uppercase text-stone-400 mr-2">Kategorije:</span>
-              {categories.map((cat) => (
+              {categories.map((cat: CatItem) => (
                 <Link
                   key={cat.id}
                   href={`/products?categoryId=${cat.id}`}
@@ -70,7 +74,7 @@ export default async function HomePage() {
                   {cat.name}
                 </Link>
               ))}
-              {seasons.map((s) => (
+              {seasons.map((s: SeasonItem) => (
                 <Link
                   key={s.id}
                   href={`/products?seasonId=${s.id}`}
@@ -108,7 +112,7 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-px bg-stone-200 md:grid-cols-3 lg:grid-cols-4">
-            {latestProducts.map((product) => (
+            {latestProducts.map((product: ProductItem) => (
               <article key={product.id} className="group bg-white p-6 hover:bg-stone-50 transition-colors">
                 <div className="mb-4 aspect-[3/4] bg-stone-100 overflow-hidden">
                   {product.imageUrl ? (
