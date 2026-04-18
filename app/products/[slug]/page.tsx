@@ -35,11 +35,16 @@ export default async function ProductPage({
 
   if (!product || !product.isActive) notFound();
 
+  type ProductVariantItem = (typeof product.variants)[number];
+
   const pct = product.compareAtPriceCents
     ? discountPct(product.priceCents, product.compareAtPriceCents)
     : 0;
 
-  const totalStock = product.variants.reduce((s, v) => s + v.stock, 0);
+  const totalStock = product.variants.reduce(
+    (s: number, v: ProductVariantItem) => s + v.stock,
+    0
+  );
 
   return (
     <div className="min-h-screen bg-white">

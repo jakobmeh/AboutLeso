@@ -20,8 +20,8 @@ export function SizePicker({
   const [selected, setSelected] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
 
-  const activeVariants = variants.filter((v) => v.isActive);
-  const selectedVariant = activeVariants.find((v) => v.id === selected);
+  const activeVariants = variants.filter((v: Variant) => v.isActive);
+  const selectedVariant = activeVariants.find((v: Variant) => v.id === selected);
 
   async function handleSubmit(formData: FormData) {
     if (!selected) return;
@@ -46,7 +46,7 @@ export function SizePicker({
           Velikost{selected && selectedVariant ? ` — ${selectedVariant.size}` : ""}
         </p>
         <div className="flex flex-wrap gap-2">
-          {activeVariants.map((v) => {
+          {activeVariants.map((v: Variant) => {
             const outOfStock = v.stock === 0;
             const isSelected = selected === v.id;
             return (
