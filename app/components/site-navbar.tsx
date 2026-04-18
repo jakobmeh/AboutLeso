@@ -17,7 +17,7 @@ export async function SiteNavbar() {
         select: { quantity: true },
       })
     : [];
-  const cartQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartQuantity = cartItems.reduce((sum: number, item) => sum + item.quantity, 0);
 
   return (
     <header

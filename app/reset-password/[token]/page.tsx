@@ -1,13 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { use, useActionState } from "react";
 import { resetPassword } from "@/app/actions/auth";
 
 export default function ResetPasswordPage({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
+  const { token } = use(params);
   const [state, action, pending] = useActionState(resetPassword, undefined);
 
   return (
@@ -30,7 +31,7 @@ export default function ResetPasswordPage({
           )}
 
           <form action={action} className="space-y-5">
-            <input type="hidden" name="token" value={params.token} />
+            <input type="hidden" name="token" value={token} />
 
             <div>
               <label
