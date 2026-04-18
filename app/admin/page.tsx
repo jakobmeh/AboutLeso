@@ -772,7 +772,7 @@ export default async function AdminPage({
                           )}
                         </td>
                         <td className="py-3 text-xs text-stone-500">
-                          {order.items.map((i) => `${i.productName} (${i.productSize ?? "?"}) ×${i.quantity}`).join(", ")}
+                          {order.items.map((i: { productName: string; productSize: string | null; quantity: number }) => `${i.productName} (${i.productSize ?? "?"}) ×${i.quantity}`).join(", ")}
                         </td>
                       </tr>
                     ))}
