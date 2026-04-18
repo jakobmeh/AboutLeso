@@ -28,6 +28,10 @@ type OrderConfirmationEmailInput = {
   shippingCents: number;
   totalCents: number;
   creatorCode?: string | null;
+  invoiceAttachment?: {
+    filename?: string;
+    content: Uint8Array;
+  } | null;
   shippingAddress?: {
     label?: string | null;
     fullName: string;
@@ -146,10 +150,21 @@ export async function sendOrderConfirmationEmail(
     `
     : "";
 
+  const attachments = data.invoiceAttachment
+    ? [
+        {
+          filename: data.invoiceAttachment.filename ?? `racun-${data.orderId.slice(0, 8)}.pdf`,
+          content: Buffer.from(data.invoiceAttachment.content),
+          contentType: "application/pdf",
+        },
+      ]
+    : undefined;
+
   await transporter.sendMail({
     from: `"${process.env.BREVO_FROM_NAME}" <${process.env.BREVO_FROM_EMAIL}>`,
     to: email,
     subject: `Potrdilo narocila - Leso (#${data.orderId.slice(0, 8)})`,
+    attachments,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 720px; margin: 0 auto; color: #1f2937;">
         <h2 style="font-weight: 300; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 6px;">LESO</h2>

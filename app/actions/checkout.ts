@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { createInvoicePdf } from "@/lib/invoice-pdf";
 import { getShippingCents } from "@/lib/pricing";
 
 async function requireUser() {
@@ -135,7 +136,7 @@ export async function checkoutFromCart(formData: FormData) {
         creatorCodeId: creatorCodeRecord?.id ?? null,
         commissionCents,
       },
-      select: { id: true },
+      select: { id: true, createdAt: true },
     });
 
     await tx.orderItem.createMany({
@@ -162,6 +163,7 @@ export async function checkoutFromCart(formData: FormData) {
 
     return {
       orderId: order.id,
+      orderCreatedAt: order.createdAt,
       subtotalCents,
       discountCents,
       shippingCents,
@@ -197,6 +199,40 @@ export async function checkoutFromCart(formData: FormData) {
 
   if (recipientEmail) {
     try {
+      let invoiceAttachment: { filename: string; content: Uint8Array } | null = null;
+
+      try {
+        const pdfBytes = await createInvoicePdf({
+          order: {
+            id: checkoutResult.orderId,
+            createdAt: checkoutResult.orderCreatedAt,
+            subtotalCents: checkoutResult.subtotalCents,
+            discountCents: checkoutResult.discountCents,
+            shippingCents: checkoutResult.shippingCents,
+            totalCents: checkoutResult.totalCents,
+            creatorCode: checkoutResult.creatorCode,
+            customerName: user.name,
+            customerEmail: recipientEmail,
+            shippingLabel: checkoutResult.shippingAddress.label,
+            shippingFullName: checkoutResult.shippingAddress.fullName,
+            shippingLine1: checkoutResult.shippingAddress.line1,
+            shippingLine2: checkoutResult.shippingAddress.line2,
+            shippingPostalCode: checkoutResult.shippingAddress.postalCode,
+            shippingCity: checkoutResult.shippingAddress.city,
+            shippingCountry: checkoutResult.shippingAddress.country,
+            shippingPhone: checkoutResult.shippingAddress.phone,
+          },
+          items: checkoutResult.items,
+        });
+
+        invoiceAttachment = {
+          filename: `racun-${checkoutResult.orderId.slice(0, 8)}.pdf`,
+          content: pdfBytes,
+        };
+      } catch (error) {
+        console.error("Invoice PDF attachment generation failed:", error);
+      }
+
       await sendOrderConfirmationEmail(recipientEmail, {
         orderId: checkoutResult.orderId,
         customerName: user.name,
@@ -205,6 +241,7 @@ export async function checkoutFromCart(formData: FormData) {
         shippingCents: checkoutResult.shippingCents,
         totalCents: checkoutResult.totalCents,
         creatorCode: checkoutResult.creatorCode,
+        invoiceAttachment,
         shippingAddress: checkoutResult.shippingAddress,
         items: checkoutResult.items,
       });

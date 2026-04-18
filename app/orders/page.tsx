@@ -103,6 +103,12 @@ export default async function OrdersPage({
                 <div className="space-y-1 text-right">
                   <p className="text-xs tracking-widest uppercase text-stone-400">Skupaj</p>
                   <p className="text-lg font-light text-stone-900">{formatPrice(order.totalCents)}</p>
+                  <a
+                    href={`/api/orders/${order.id}/invoice`}
+                    className="inline-flex border border-stone-300 px-3 py-1 text-[10px] tracking-widest uppercase text-stone-600 hover:border-stone-700 hover:text-stone-900 transition-colors"
+                  >
+                    Prenesi PDF
+                  </a>
                 </div>
               </div>
 
