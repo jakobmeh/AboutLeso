@@ -267,7 +267,7 @@ export default async function CartPage({
                       </p>
                     ) : (
                       <div className="space-y-2">
-                        {addresses.map((address) => (
+                        {addresses.map((address: Address) => (
                           <label
                             key={address.id}
                             className="block cursor-pointer border border-stone-200 p-3 text-sm hover:border-stone-400"
