@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { cancelOrder } from "@/app/actions/admin-orders";
+import { CancelOrderButton } from "./CancelOrderButton";
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
 
@@ -131,16 +131,7 @@ export default async function OrdersPage({
                       Prenesi PDF
                     </a>
                     {order.status === "PENDING" && (
-                      <form action={cancelOrder}>
-                        <input type="hidden" name="orderId" value={order.id} />
-                        <button
-                          type="submit"
-                          className="inline-flex border border-red-200 px-3 py-1 text-[10px] tracking-widest uppercase text-red-500 hover:border-red-500 hover:text-red-700 transition-colors"
-                          onClick={(e) => { if (!confirm("Res želiš preklicati naročilo?")) e.preventDefault(); }}
-                        >
-                          Prekliči
-                        </button>
-                      </form>
+                      <CancelOrderButton orderId={order.id} />
                     )}
                   </div>
                 </div>
