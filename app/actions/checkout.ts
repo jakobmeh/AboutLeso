@@ -73,7 +73,7 @@ export async function checkoutFromCart() {
     });
 
     await tx.orderItem.createMany({
-      data: cart.items.map((item) => ({
+      data: cart.items.map((item: CartItem) => ({
         orderId: order.id,
         productId: item.product.id,
         productName: item.product.name,
