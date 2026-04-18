@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
 
   return Response.json({
     items: items.map((item: (typeof items)[0]) => ({
-      variants: item.variants.map((variant) => ({
+      variants: item.variants.map((variant: { id: string; size: string; stock: number; isActive: boolean }) => ({
         id: variant.id,
         size: variant.size,
         stock: variant.stock,
