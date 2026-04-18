@@ -13,6 +13,11 @@ import {
   toggleProductActive,
   updateProduct,
 } from "@/app/actions/admin-products";
+import {
+  assignCreatorCode,
+  revokeCreatorCode,
+  searchCreatorUser,
+} from "@/app/actions/admin-creator";
 import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { Fragment } from "react";
@@ -400,8 +405,12 @@ export default async function AdminPage({
 }) {
   const session = await requireRole([Role.ADMIN]);
   const resolved = await searchParams;
+  const section = one(resolved.section) || "products";
   const errorMessage = one(resolved.error).trim();
-  const [categories, seasons, audiences, products] = await Promise.all([
+  const successMessage = one(resolved.success).trim();
+  const lookupEmail = one(resolved.lookup).trim();
+
+  const [categories, seasons, audiences, products, creatorCodes] = await Promise.all([
     prisma.category.findMany({ orderBy: { name: "asc" } }),
     prisma.season.findMany({ orderBy: { name: "asc" } }),
     prisma.audience.findMany({ orderBy: { name: "asc" } }),
@@ -413,7 +422,30 @@ export default async function AdminPage({
         audience: { select: { name: true } },
       },
     }),
+    prisma.creatorCode.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, email: true, name: true } },
+        _count: { select: { orders: true } },
+      },
+    }),
   ]);
+
+  type CreatorCodeRow = (typeof creatorCodes)[0];
+
+  let lookupUser: { id: string; email: string; name: string | null; role: Role; creatorCode: { code: string; discountPercent: number; commissionPercent: number } | null } | null = null;
+  if (lookupEmail) {
+    lookupUser = await prisma.user.findUnique({
+      where: { email: lookupEmail },
+      select: { id: true, email: true, name: true, role: true, creatorCode: { select: { code: true, discountPercent: true, commissionPercent: true } } },
+    });
+  }
+
+  const tabs = [
+    { key: "products", label: "Izdelki" },
+    { key: "creators", label: "Kreatorji" },
+    { key: "taxonomy", label: "Taksonomija" },
+  ];
 
   return (
     <div className="min-h-screen bg-stone-50 px-6 py-12">
@@ -422,52 +454,233 @@ export default async function AdminPage({
           <h1 className="text-2xl font-light tracking-[0.2em] uppercase text-stone-800">
             Admin Panel
           </h1>
-          {errorMessage && (
-            <p className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {errorMessage}
-            </p>
-          )}
-          <p className="mt-4 text-sm text-stone-600">
-            Signed in as: {session.user.name ?? session.user.email}
-          </p>
-          <p className="mt-2 text-sm text-stone-600">
-            Role: <span className="font-medium text-stone-800">{session.user.role}</span>
-          </p>
-          <p className="mt-5 text-stone-500">
-            Step 3: base product CRUD connected to category, season, and audience.
+          <p className="mt-2 text-sm text-stone-500">
+            {session.user.name ?? session.user.email}
           </p>
         </section>
 
-        <ProductSection
-          products={products}
-          categories={categories}
-          seasons={seasons}
-          audiences={audiences}
-        />
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-stone-200">
+          {tabs.map((t) => (
+            <a
+              key={t.key}
+              href={`/admin?section=${t.key}`}
+              className={`px-5 py-2.5 text-xs tracking-widest uppercase transition-colors ${
+                section === t.key
+                  ? "border-b-2 border-stone-900 text-stone-900 font-medium"
+                  : "text-stone-400 hover:text-stone-700"
+              }`}
+            >
+              {t.label}
+            </a>
+          ))}
+        </div>
 
-        <TaxonomySection
-          title="Categories"
-          placeholder="Example: T-Shirts"
-          items={categories}
-          createAction={createCategory}
-          deleteAction={deleteCategory}
-        />
+        {/* Notifications */}
+        {errorMessage && (
+          <p className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage === "invalid" && "Neveljavni podatki. Koda mora biti 2–20 znakov (A-Z, 0-9)."}
+            {errorMessage === "code_taken" && "Ta koda je že zasedena. Izberi drugo."}
+            {!["invalid", "code_taken"].includes(errorMessage) && errorMessage}
+          </p>
+        )}
+        {successMessage === "1" && section === "creators" && (
+          <p className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Kreator koda uspešno dodeljena.
+          </p>
+        )}
 
-        <TaxonomySection
-          title="Seasons"
-          placeholder="Example: Summer"
-          items={seasons}
-          createAction={createSeason}
-          deleteAction={deleteSeason}
-        />
+        {/* Products section */}
+        {section === "products" && (
+          <ProductSection
+            products={products}
+            categories={categories}
+            seasons={seasons}
+            audiences={audiences}
+          />
+        )}
 
-        <TaxonomySection
-          title="Audiences"
-          placeholder="Example: Men"
-          items={audiences}
-          createAction={createAudience}
-          deleteAction={deleteAudience}
-        />
+        {/* Creators section */}
+        {section === "creators" && (
+          <section className="rounded border border-stone-200 bg-white p-6 space-y-8">
+            <h2 className="text-lg font-medium text-stone-800">Upravljanje kreatorjev</h2>
+
+            {/* Search */}
+            <div>
+              <h3 className="text-xs tracking-widest uppercase text-stone-400 mb-3">Poišči uporabnika po e-mailu</h3>
+              <form action={searchCreatorUser} className="flex gap-3">
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  defaultValue={lookupEmail}
+                  placeholder="uporabnik@email.com"
+                  className="flex-1 border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
+                />
+                <button
+                  type="submit"
+                  className="bg-stone-800 px-4 py-2 text-xs tracking-widest uppercase text-white hover:bg-stone-900"
+                >
+                  Išči
+                </button>
+              </form>
+            </div>
+
+            {/* Lookup result */}
+            {lookupEmail && (
+              <div className="border border-stone-200 p-5">
+                {lookupUser ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-6 text-sm">
+                      <div>
+                        <p className="text-xs tracking-widest uppercase text-stone-400">Ime</p>
+                        <p className="mt-0.5 text-stone-800">{lookupUser.name ?? "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs tracking-widest uppercase text-stone-400">E-mail</p>
+                        <p className="mt-0.5 text-stone-800">{lookupUser.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs tracking-widest uppercase text-stone-400">Vloga</p>
+                        <p className="mt-0.5 font-medium text-stone-800">{lookupUser.role}</p>
+                      </div>
+                    </div>
+
+                    <form action={assignCreatorCode} className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                      <input type="hidden" name="userId" value={lookupUser.id} />
+                      <div>
+                        <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">Koda</label>
+                        <input
+                          type="text"
+                          name="code"
+                          required
+                          defaultValue={lookupUser.creatorCode?.code ?? ""}
+                          placeholder="JAKOB10"
+                          className="w-full border border-stone-300 px-3 py-2 text-sm text-stone-800 uppercase outline-none focus:border-stone-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">Popust kupca (%)</label>
+                        <input
+                          type="number"
+                          name="discountPercent"
+                          required
+                          min={0}
+                          max={80}
+                          defaultValue={lookupUser.creatorCode?.discountPercent ?? 10}
+                          className="w-full border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">Provizija kreatorja (%)</label>
+                        <input
+                          type="number"
+                          name="commissionPercent"
+                          required
+                          min={0}
+                          max={50}
+                          defaultValue={lookupUser.creatorCode?.commissionPercent ?? 5}
+                          className="w-full border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="submit"
+                          className="w-full bg-stone-800 px-4 py-2 text-xs tracking-widest uppercase text-white hover:bg-stone-900"
+                        >
+                          {lookupUser.creatorCode ? "Posodobi kodo" : "Dodeli kodo"}
+                        </button>
+                      </div>
+                    </form>
+
+                    {lookupUser.creatorCode && lookupUser.role === "CREATOR" && (
+                      <form action={revokeCreatorCode}>
+                        <input type="hidden" name="userId" value={lookupUser.id} />
+                        <button
+                          type="submit"
+                          className="text-xs tracking-widest uppercase text-red-600 hover:text-red-700"
+                        >
+                          Prekliči kreator status
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-stone-400">Uporabnik z e-mailom <strong>{lookupEmail}</strong> ne obstaja.</p>
+                )}
+              </div>
+            )}
+
+            {/* All creator codes */}
+            <div>
+              <h3 className="text-xs tracking-widest uppercase text-stone-400 mb-3">Vsi kreatorji</h3>
+              {creatorCodes.length === 0 ? (
+                <p className="text-sm text-stone-400">Še ni kreatorjev.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-collapse text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-stone-200 text-xs tracking-widest uppercase text-stone-400">
+                        <th className="py-2 pr-4 font-medium">Kreator</th>
+                        <th className="py-2 pr-4 font-medium">Koda</th>
+                        <th className="py-2 pr-4 font-medium">Popust</th>
+                        <th className="py-2 pr-4 font-medium">Provizija</th>
+                        <th className="py-2 pr-4 font-medium">Naročil</th>
+                        <th className="py-2 pr-4 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                      {creatorCodes.map((row: CreatorCodeRow) => (
+                        <tr key={row.id}>
+                          <td className="py-3 pr-4 text-stone-800">
+                            <p>{row.user.name ?? "—"}</p>
+                            <p className="text-xs text-stone-400">{row.user.email}</p>
+                          </td>
+                          <td className="py-3 pr-4 font-mono text-stone-700">{row.code}</td>
+                          <td className="py-3 pr-4 text-stone-700">{row.discountPercent}%</td>
+                          <td className="py-3 pr-4 text-stone-700">{row.commissionPercent}%</td>
+                          <td className="py-3 pr-4 text-stone-700">{row._count.orders}</td>
+                          <td className="py-3 pr-4">
+                            <span className={`text-xs tracking-widest uppercase font-medium ${row.isActive ? "text-green-700" : "text-red-500"}`}>
+                              {row.isActive ? "Aktivna" : "Neaktivna"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Taxonomy section */}
+        {section === "taxonomy" && (
+          <>
+            <TaxonomySection
+              title="Categories"
+              placeholder="Example: T-Shirts"
+              items={categories}
+              createAction={createCategory}
+              deleteAction={deleteCategory}
+            />
+            <TaxonomySection
+              title="Seasons"
+              placeholder="Example: Summer"
+              items={seasons}
+              createAction={createSeason}
+              deleteAction={deleteSeason}
+            />
+            <TaxonomySection
+              title="Audiences"
+              placeholder="Example: Men"
+              items={audiences}
+              createAction={createAudience}
+              deleteAction={deleteAudience}
+            />
+          </>
+        )}
       </main>
     </div>
   );

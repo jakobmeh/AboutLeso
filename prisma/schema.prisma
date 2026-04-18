@@ -34,10 +34,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  cart     Cart?
-  orders   Order[]
+  accounts    Account[]
+  sessions    Session[]
+  cart        Cart?
+  orders      Order[]
+  creatorCode CreatorCode?
 }
 
 model Account {
@@ -180,20 +181,38 @@ model CartItem {
 }
 
 model Order {
-  id            String      @id @default(cuid())
-  userId        String
-  status        OrderStatus @default(CONFIRMED)
-  subtotalCents Int
-  discountCents Int         @default(0)
-  totalCents    Int
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id              String      @id @default(cuid())
+  userId          String
+  status          OrderStatus @default(CONFIRMED)
+  subtotalCents   Int
+  discountCents   Int         @default(0)
+  totalCents      Int
+  creatorCodeId   String?
+  commissionCents Int         @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  user  User        @relation(fields: [userId], references: [id], onDelete: Restrict)
-  items OrderItem[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  creatorCode CreatorCode? @relation(fields: [creatorCodeId], references: [id], onDelete: SetNull)
+  items       OrderItem[]
 
   @@index([userId])
   @@index([createdAt])
+  @@index([creatorCodeId])
+}
+
+model CreatorCode {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  userId            String   @unique
+  discountPercent   Int
+  commissionPercent Int
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
 }
 
 model OrderItem {

@@ -21,6 +21,11 @@ export async function SiteNavbar() {
               <Link href="/orders" className="text-xs tracking-widest uppercase text-stone-500 hover:text-stone-900 transition-colors">
                 Naročila
               </Link>
+              {user.role === "CREATOR" && (
+                <Link href="/creator" className="text-xs tracking-widest uppercase text-stone-500 hover:text-stone-900 transition-colors">
+                  Kreator
+                </Link>
+              )}
               {user.role === "ADMIN" && (
                 <Link href="/admin" className="text-xs tracking-widest uppercase text-stone-500 hover:text-stone-900 transition-colors">
                   Admin

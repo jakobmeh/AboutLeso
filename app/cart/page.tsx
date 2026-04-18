@@ -143,7 +143,18 @@ export default async function CartPage() {
                   </div>
                 </div>
 
-                <form action={checkoutFromCart} className="mt-6">
+                <form action={checkoutFromCart} className="mt-6 space-y-3">
+                  <div>
+                    <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">
+                      Kreator koda (neobvezno)
+                    </label>
+                    <input
+                      type="text"
+                      name="creatorCode"
+                      placeholder="Npr. JAKOB10"
+                      className="w-full border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-700 uppercase placeholder:normal-case placeholder:text-stone-400"
+                    />
+                  </div>
                   <button
                     type="submit"
                     className="w-full bg-stone-900 py-3 text-xs tracking-widest uppercase text-white hover:bg-stone-700 transition-colors"

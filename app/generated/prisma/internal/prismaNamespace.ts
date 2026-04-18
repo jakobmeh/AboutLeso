@@ -397,6 +397,7 @@ export const ModelName = {
   Cart: 'Cart',
   CartItem: 'CartItem',
   Order: 'Order',
+  CreatorCode: 'CreatorCode',
   OrderItem: 'OrderItem'
 } as const
 
@@ -413,7 +414,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "account" | "session" | "verificationToken" | "emailVerificationCode" | "passwordResetToken" | "category" | "season" | "audience" | "product" | "cart" | "cartItem" | "order" | "orderItem"
+    modelProps: "user" | "account" | "session" | "verificationToken" | "emailVerificationCode" | "passwordResetToken" | "category" | "season" | "audience" | "product" | "cart" | "cartItem" | "order" | "creatorCode" | "orderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1379,6 +1380,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CreatorCode: {
+      payload: Prisma.$CreatorCodePayload<ExtArgs>
+      fields: Prisma.CreatorCodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CreatorCodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CreatorCodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>
+        }
+        findFirst: {
+          args: Prisma.CreatorCodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CreatorCodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>
+        }
+        findMany: {
+          args: Prisma.CreatorCodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>[]
+        }
+        create: {
+          args: Prisma.CreatorCodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>
+        }
+        createMany: {
+          args: Prisma.CreatorCodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CreatorCodeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>[]
+        }
+        delete: {
+          args: Prisma.CreatorCodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>
+        }
+        update: {
+          args: Prisma.CreatorCodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>
+        }
+        deleteMany: {
+          args: Prisma.CreatorCodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CreatorCodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CreatorCodeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>[]
+        }
+        upsert: {
+          args: Prisma.CreatorCodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CreatorCodePayload>
+        }
+        aggregate: {
+          args: Prisma.CreatorCodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCreatorCode>
+        }
+        groupBy: {
+          args: Prisma.CreatorCodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreatorCodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CreatorCodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CreatorCodeCountAggregateOutputType> | number
+        }
+      }
+    }
     OrderItem: {
       payload: Prisma.$OrderItemPayload<ExtArgs>
       fields: Prisma.OrderItemFieldRefs
@@ -1649,11 +1724,27 @@ export const OrderScalarFieldEnum = {
   subtotalCents: 'subtotalCents',
   discountCents: 'discountCents',
   totalCents: 'totalCents',
+  creatorCodeId: 'creatorCodeId',
+  commissionCents: 'commissionCents',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+export const CreatorCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  userId: 'userId',
+  discountPercent: 'discountPercent',
+  commissionPercent: 'commissionPercent',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreatorCodeScalarFieldEnum = (typeof CreatorCodeScalarFieldEnum)[keyof typeof CreatorCodeScalarFieldEnum]
 
 
 export const OrderItemScalarFieldEnum = {
@@ -1898,6 +1989,7 @@ export type GlobalOmitConfig = {
   cart?: Prisma.CartOmit
   cartItem?: Prisma.CartItemOmit
   order?: Prisma.OrderOmit
+  creatorCode?: Prisma.CreatorCodeOmit
   orderItem?: Prisma.OrderItemOmit
 }
 

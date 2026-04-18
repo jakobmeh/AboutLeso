@@ -64,6 +64,7 @@ export const ModelName = {
   Cart: 'Cart',
   CartItem: 'CartItem',
   Order: 'Order',
+  CreatorCode: 'CreatorCode',
   OrderItem: 'OrderItem'
 } as const
 
@@ -240,11 +241,27 @@ export const OrderScalarFieldEnum = {
   subtotalCents: 'subtotalCents',
   discountCents: 'discountCents',
   totalCents: 'totalCents',
+  creatorCodeId: 'creatorCodeId',
+  commissionCents: 'commissionCents',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+export const CreatorCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  userId: 'userId',
+  discountPercent: 'discountPercent',
+  commissionPercent: 'commissionPercent',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CreatorCodeScalarFieldEnum = (typeof CreatorCodeScalarFieldEnum)[keyof typeof CreatorCodeScalarFieldEnum]
 
 
 export const OrderItemScalarFieldEnum = {
