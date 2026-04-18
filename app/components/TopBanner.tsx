@@ -18,12 +18,12 @@ export function TopBanner({ message, id }: { message: string; id: string }) {
   if (!visible) return null;
 
   return (
-    <div className="relative bg-stone-900 text-white text-xs text-center py-2.5 px-10">
+    <div className="relative bg-[#c41230] text-white text-xs tracking-wide text-center py-2.5 px-10 font-medium">
       {message}
       <button
         onClick={dismiss}
         aria-label="Zapri"
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-base leading-none"
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors text-lg leading-none"
       >
         ×
       </button>

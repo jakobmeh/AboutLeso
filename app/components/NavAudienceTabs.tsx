@@ -8,6 +8,7 @@ type Audience = { id: string; name: string };
 
 function Tabs({ audiences }: { audiences: Audience[] }) {
   const searchParams = useSearchParams();
+  // Works on both / (home) and /products
   const active = searchParams.get("audienceId") ?? "";
 
   return (
@@ -15,7 +16,7 @@ function Tabs({ audiences }: { audiences: Audience[] }) {
       {audiences.map((a) => (
         <Link
           key={a.id}
-          href={`/products?audienceId=${a.id}`}
+          href={`/?audienceId=${a.id}`}
           className={`px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors ${
             active === a.id
               ? "text-stone-900 underline underline-offset-4"
