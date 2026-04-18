@@ -333,7 +333,7 @@ export default async function CartPage({
                       Upravljanje naslovov
                     </p>
                     <div className="space-y-2">
-                      {addresses.map((address) => (
+                      {addresses.map((address: Address) => (
                         <div
                           key={`manage-${address.id}`}
                           className="flex items-center justify-between rounded border border-stone-100 px-3 py-2"
