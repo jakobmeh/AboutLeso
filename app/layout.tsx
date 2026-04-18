@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SiteNavbar } from "./components/site-navbar";
+import ChatWidget from "./components/ChatWidget";
 
 export const metadata: Metadata = {
   title: "Leso",
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <SiteNavbar />
         <Providers>{children}</Providers>
+        <ChatWidget />
       </body>
     </html>
   );
