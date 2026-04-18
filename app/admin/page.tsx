@@ -38,6 +38,13 @@ type ProductRow = {
   audience: { name: string };
 };
 
+type SearchParamsInput = Record<string, string | string[] | undefined>;
+
+function one(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
+
 function formatPrice(cents: number) {
   return `${(cents / 100).toFixed(2)} EUR`;
 }
@@ -386,8 +393,14 @@ function ProductSection({
   );
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParamsInput>;
+}) {
   const session = await requireRole([Role.ADMIN]);
+  const resolved = await searchParams;
+  const errorMessage = one(resolved.error).trim();
   const [categories, seasons, audiences, products] = await Promise.all([
     prisma.category.findMany({ orderBy: { name: "asc" } }),
     prisma.season.findMany({ orderBy: { name: "asc" } }),
@@ -409,6 +422,11 @@ export default async function AdminPage() {
           <h1 className="text-2xl font-light tracking-[0.2em] uppercase text-stone-800">
             Admin Panel
           </h1>
+          {errorMessage && (
+            <p className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {errorMessage}
+            </p>
+          )}
           <p className="mt-4 text-sm text-stone-600">
             Signed in as: {session.user.name ?? session.user.email}
           </p>

@@ -6,6 +6,8 @@ import { Role } from "@/app/generated/prisma/client";
 import { requireRole } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 
+const IdSchema = z.string().trim().min(1, { message: "Invalid id." });
+
 const CreateProductSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(500).optional(),
@@ -21,13 +23,13 @@ const CreateProductSchema = z.object({
     .refine((value) => Number.isInteger(Number(value)) && Number(value) >= 0, {
       message: "Invalid stock.",
     }),
-  categoryId: z.string().cuid(),
-  seasonId: z.string().cuid(),
-  audienceId: z.string().cuid(),
+  categoryId: IdSchema,
+  seasonId: IdSchema,
+  audienceId: IdSchema,
 });
 
 const UpdateProductSchema = CreateProductSchema.extend({
-  id: z.string().cuid(),
+  id: IdSchema,
 });
 
 function slugify(value: string) {
@@ -98,7 +100,7 @@ export async function createProduct(formData: FormData) {
 export async function deleteProduct(formData: FormData) {
   await ensureAdmin();
 
-  const parsed = z.string().cuid().safeParse(formData.get("id"));
+  const parsed = IdSchema.safeParse(formData.get("id"));
   if (!parsed.success) {
     throw new Error("Invalid id.");
   }
@@ -152,7 +154,7 @@ export async function updateProduct(formData: FormData) {
 export async function toggleProductActive(formData: FormData) {
   await ensureAdmin();
 
-  const parsed = z.string().cuid().safeParse(formData.get("id"));
+  const parsed = IdSchema.safeParse(formData.get("id"));
   if (!parsed.success) {
     throw new Error("Invalid id.");
   }
