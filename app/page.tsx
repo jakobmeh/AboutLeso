@@ -10,57 +10,60 @@ function discountPct(price: number, compareAt: number) {
 }
 
 const HERO: Record<string, {
-  image: string; headline: string; sub: string; cta: string;
+  image: string; imgPos: string; headline: string; sub: string; cta: string;
   features: { label: string; sub: string; img: string; categorySlugs: string[] }[];
 }> = {
   moski: {
     image: "/MANS.png",
+    imgPos: "center 20%",
     headline: "Nova kolekcija\nza moške",
     sub: "Odkrijte sveže stile za vsak dan — od casual do elegantnega.",
     cta: "Nakupuj moške kose",
     features: [
-      { label: "Jakne & plašči", sub: "Za vsako vreme", img: "https://source.unsplash.com/480x640/?men,jacket,fashion&sig=201", categorySlugs: ["jakne"] },
-      { label: "Majice & polo", sub: "Casual in elegantno", img: "https://source.unsplash.com/480x640/?men,polo,shirt&sig=202", categorySlugs: ["majice", "t-shirt"] },
-      { label: "Hlače", sub: "Chino, cargo, jogger", img: "https://source.unsplash.com/480x640/?men,pants,fashion&sig=203", categorySlugs: ["hlace"] },
+      { label: "Jakne & plašči", sub: "Za vsako vreme", img: "https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["jakne"] },
+      { label: "Majice & polo", sub: "Casual in elegantno", img: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["majice", "t-shirt"] },
+      { label: "Hlače", sub: "Chino, cargo, jogger", img: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["hlace"] },
     ],
   },
   zenske: {
     image: "/WOMANS.png",
+    imgPos: "center 20%",
     headline: "Moda za\nženske",
     sub: "Oblačila in obutev za vsak dan in vsako priložnost.",
     cta: "Nakupuj ženske kose",
     features: [
-      { label: "Obleke & krila", sub: "Midi, maxi in mini", img: "https://source.unsplash.com/480x640/?woman,dress,elegant&sig=204", categorySlugs: ["obleke"] },
-      { label: "Petke & čevlji", sub: "Superge, škornji, petke", img: "https://source.unsplash.com/480x640/?woman,heels,shoes,fashion&sig=210", categorySlugs: ["obutev"] },
-      { label: "Jakne & plašči", sub: "Jesenski in zimski slogi", img: "https://source.unsplash.com/480x640/?woman,coat,trench&sig=205", categorySlugs: ["jakne"] },
-      { label: "Puloverji & jopici", sub: "Pleteno in mehko", img: "https://source.unsplash.com/480x640/?woman,sweater,knitwear&sig=206", categorySlugs: ["puloverji", "jopici"] },
-      { label: "Majice & bluze", sub: "Casual in elegantno", img: "https://source.unsplash.com/480x640/?woman,blouse,shirt&sig=211", categorySlugs: ["srajce", "majice"] },
-      { label: "Hlače", sub: "Ravne, palazzo, cargo", img: "https://source.unsplash.com/480x640/?woman,pants,trousers&sig=212", categorySlugs: ["hlace"] },
+      { label: "Obleke & krila", sub: "Midi, maxi in mini", img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["obleke"] },
+      { label: "Petke & čevlji", sub: "Superge, škornji, petke", img: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["obutev"] },
+      { label: "Jakne & plašči", sub: "Jesenski in zimski slogi", img: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["jakne"] },
+      { label: "Puloverji & jopici", sub: "Pleteno in mehko", img: "https://images.unsplash.com/photo-1576566588047-6b4486b4522?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["puloverji", "jopici"] },
+      { label: "Majice & bluze", sub: "Casual in elegantno", img: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["srajce", "majice"] },
+      { label: "Hlače", sub: "Ravne, palazzo, cargo", img: "https://images.unsplash.com/photo-1542219550-37153d387c27?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["hlace"] },
     ],
   },
   otroci: {
     image: "/KIDS.png",
+    imgPos: "center 40%",
     headline: "Oblačila za\nnajmlajše",
     sub: "Udobno, veselo in vzdržljivo — za vsak dan.",
     cta: "Nakupuj otroške kose",
     features: [
-      { label: "Jakne", sub: "Za igro in šolo", img: "https://source.unsplash.com/480x640/?child,jacket,outdoor&sig=207", categorySlugs: ["jakne"] },
-      { label: "Majice", sub: "Pisane in udobne", img: "https://source.unsplash.com/480x640/?child,tshirt,colorful&sig=208", categorySlugs: ["majice", "t-shirt"] },
-      { label: "Jopici", sub: "Toplo in kul", img: "https://source.unsplash.com/480x640/?child,hoodie,happy&sig=209", categorySlugs: ["jopici"] },
+      { label: "Jakne", sub: "Za igro in šolo", img: "https://images.unsplash.com/photo-1604671368394-2240d0b1bb6c?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["jakne"] },
+      { label: "Majice", sub: "Pisane in udobne", img: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["majice", "t-shirt"] },
+      { label: "Jopici", sub: "Toplo in kul", img: "https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["jopici"] },
     ],
   },
 };
 
 const CAT_IMG: Record<string, string> = {
-  majice: "https://source.unsplash.com/200x200/?shirt,fashion,model&sig=300",
-  "t-shirt": "https://source.unsplash.com/200x200/?tshirt,casual&sig=301",
-  srajce: "https://source.unsplash.com/200x200/?shirt,formal&sig=302",
-  obleke: "https://source.unsplash.com/200x200/?dress,fashion&sig=303",
-  puloverji: "https://source.unsplash.com/200x200/?sweater,knit&sig=304",
-  jopici: "https://source.unsplash.com/200x200/?hoodie,sweatshirt&sig=305",
-  hlace: "https://source.unsplash.com/200x200/?pants,trousers&sig=306",
-  jakne: "https://source.unsplash.com/200x200/?jacket,coat&sig=307",
-  kape: "https://source.unsplash.com/200x200/?beanie,hat&sig=308",
+  majice:    "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200&h=200&fit=crop&crop=center&q=80",
+  "t-shirt": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop&crop=center&q=80",
+  srajce:    "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=200&h=200&fit=crop&crop=center&q=80",
+  obleke:    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=200&h=200&fit=crop&crop=center&q=80",
+  puloverji: "https://images.unsplash.com/photo-1576566588047-6b4486b4522?w=200&h=200&fit=crop&crop=center&q=80",
+  jopici:    "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=200&h=200&fit=crop&crop=center&q=80",
+  hlace:     "https://images.unsplash.com/photo-1542219550-37153d387c27?w=200&h=200&fit=crop&crop=center&q=80",
+  jakne:     "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=200&h=200&fit=crop&crop=center&q=80",
+  kape:      "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=200&h=200&fit=crop&crop=center&q=80",
 };
 
 export default async function HomePage({
@@ -109,7 +112,8 @@ export default async function HomePage({
               <img
                 src={hero.image}
                 alt={audience.name}
-                className="absolute inset-0 w-full h-full object-cover object-top"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ objectPosition: hero.imgPos }}
               />
               {/* Multi-layer gradient for depth */}
               <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/20 to-transparent" />
@@ -324,24 +328,38 @@ export default async function HomePage({
 
         {/* Hero — 3-panel audience selector */}
         <section className="grid grid-cols-1 sm:grid-cols-3" style={{ height: "92vh" }}>
-          {audiences.map((a: AudienceItem, i: number) => {
-            const images = ["/MANS.png", "/KIDS.png", "/WOMANS.png"];
-            const img = images[i] ?? null;
+          {audiences.map((a: AudienceItem) => {
+            const panelData: Record<string, { img: string; tint: string }> = {
+              moski: {
+                img: "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&h=1200&fit=crop&crop=faces,center&q=80",
+                tint: "from-stone-900/80 via-stone-900/20",
+              },
+              zenske: {
+                img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&h=1200&fit=crop&crop=faces,top&q=80",
+                tint: "from-stone-900/80 via-stone-900/20",
+              },
+              otroci: {
+                img: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=800&h=1200&fit=crop&crop=faces,top&q=80",
+                tint: "from-stone-900/80 via-stone-900/20",
+              },
+            };
+            const panel = panelData[a.slug] ?? {
+              img: `https://source.unsplash.com/800x1200/?fashion,${a.slug}&sig=${a.id.slice(-2)}`,
+              tint: "from-stone-900/80 via-stone-900/20",
+            };
             return (
               <Link
                 key={a.id}
                 href={`/?audienceId=${a.id}`}
                 className="group relative flex items-end overflow-hidden bg-stone-900"
               >
-                {img && (
-                  <img
-                    src={img}
-                    alt={a.name}
-                    className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                  />
-                )}
+                <img
+                  src={panel.img}
+                  alt={a.name}
+                  className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                />
                 {/* Base gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                <div className={`absolute inset-0 bg-gradient-to-t ${panel.tint} to-transparent`} />
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-500" />
 
@@ -438,7 +456,7 @@ export default async function HomePage({
 // ── SHARED COMPONENTS ─────────────────────────────────────────────────────
 
 type AnyProduct = {
-  id: string; name: string; imageUrl: string | null;
+  id: string; name: string; slug: string; imageUrl: string | null;
   priceCents: number; compareAtPriceCents: number | null;
   category: { name: string };
 };
@@ -450,6 +468,7 @@ function ProductGrid({ products }: { products: AnyProduct[] }) {
         const pct = p.compareAtPriceCents ? discountPct(p.priceCents, p.compareAtPriceCents) : 0;
         return (
           <article key={p.id} className="group relative bg-white">
+            <Link href={`/products/${p.slug}`} className="absolute inset-0 z-0" tabIndex={-1} aria-label={p.name} />
             <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
               {p.imageUrl
                 ? <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-108" style={{ transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)" }} />

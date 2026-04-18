@@ -469,6 +469,8 @@ export default async function ProductsPage({
                   );
                   return (
                     <article key={item.id} className="group relative bg-white">
+                      {/* Clickable image link */}
+                      <Link href={`/products/${item.slug}`} className="block absolute inset-0 z-0" tabIndex={-1} aria-label={item.name} />
                       {/* Image */}
                       <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
                         {item.imageUrl ? (
@@ -542,9 +544,11 @@ export default async function ProductsPage({
                       {/* Info */}
                       <div className="p-3 sm:p-4">
                         <p className="text-[10px] tracking-[0.15em] uppercase text-stone-400">{item.category.name}</p>
-                        <h2 className="mt-1 text-sm font-medium text-stone-900 leading-snug line-clamp-2 group-hover:text-stone-600 transition-colors">
-                          {item.name}
-                        </h2>
+                        <Link href={`/products/${item.slug}`} className="relative z-10">
+                          <h2 className="mt-1 text-sm font-medium text-stone-900 leading-snug line-clamp-2 group-hover:text-stone-600 transition-colors">
+                            {item.name}
+                          </h2>
+                        </Link>
                         <div className="mt-2 flex items-baseline gap-2">
                           <span className={`text-sm font-semibold ${pct > 0 ? "" : "text-stone-800"}`} style={pct > 0 ? { color: "#c41230" } : {}}>
                             {formatPrice(item.priceCents)}

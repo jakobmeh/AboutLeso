@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { removeCartItem, updateCartItemQuantity } from "@/app/actions/cart";
+import { SizeChanger } from "./SizeChanger";
 import { checkoutFromCart } from "@/app/actions/checkout";
 import {
   createAddress,
@@ -59,8 +60,14 @@ export default async function CartPage({
                   select: {
                     id: true,
                     name: true,
+                    slug: true,
                     priceCents: true,
                     isActive: true,
+                    variants: {
+                      where: { isActive: true },
+                      select: { id: true, size: true, stock: true },
+                      orderBy: { size: "asc" },
+                    },
                   },
                 },
               },
@@ -150,10 +157,15 @@ export default async function CartPage({
                     <div>
                       <p className="text-sm font-medium text-stone-900">
                         {item.variant.product.name}
-                        <span className="ml-2 text-xs uppercase tracking-widest text-stone-500">
-                          Velikost: {item.variant.size}
-                        </span>
                       </p>
+                      <div className="mt-1 flex items-center gap-2 text-xs text-stone-500">
+                        <span className="tracking-widest uppercase">Velikost:</span>
+                        <SizeChanger
+                          itemId={item.id}
+                          currentVariantId={item.variant.id}
+                          variants={item.variant.product.variants}
+                        />
+                      </div>
                       {!item.variant.product.isActive && (
                         <span className="mt-1 inline-block text-xs tracking-widest uppercase text-red-500">
                           Ni vec aktiven

@@ -50,6 +50,23 @@ async function main() {
     prisma.audience.upsert({ where: { slug: "otroci" }, update: { name: "Otroci" }, create: { name: "Otroci", slug: "otroci" } }),
   ]);
 
+  // Size helpers
+  const SIZES_ADULT = ["XS", "S", "M", "L", "XL", "XXL"];
+  const SIZES_KIDS  = ["104", "110", "116", "122", "128", "134", "140"];
+  const SIZES_UNI   = ["UNI"];
+
+  function sizesFor(audienceId: string, categoryId: string): string[] {
+    if (categoryId === kape.id) return SIZES_UNI;
+    if (audienceId === otroci.id) return SIZES_KIDS;
+    return SIZES_ADULT;
+  }
+
+  function stockPerSize(totalStock: number, numSizes: number): number[] {
+    const base = Math.floor(totalStock / numSizes);
+    const rem  = totalStock % numSizes;
+    return Array.from({ length: numSizes }, (_, i) => base + (i < rem ? 1 : 0));
+  }
+
   // 3. Products
   const products = [
     // ── MOŠKI ──────────────────────────────────────────────────────────────
@@ -437,30 +454,32 @@ async function main() {
   let created = 0;
   let updated = 0;
   for (const p of products) {
+    const sizes   = sizesFor(p.audienceId, p.categoryId);
+    const stocks  = stockPerSize(p.stock, sizes.length);
+
     const existing = await prisma.product.findUnique({ where: { slug: p.slug }, select: { id: true } });
     if (existing) {
       await prisma.product.update({
         where: { slug: p.slug },
         data: { imageUrl: p.imageUrl, stock: p.stock, priceCents: p.priceCents, compareAtPriceCents: p.compareAtPriceCents, isActive: true },
       });
-      await prisma.productVariant.upsert({
-        where: {
-          productId_size: {
-            productId: existing.id,
-            size: "UNI",
-          },
-        },
-        create: {
-          productId: existing.id,
-          size: "UNI",
-          stock: p.stock,
-          isActive: true,
-        },
-        update: {
-          stock: p.stock,
-          isActive: true,
-        },
+      // Remove old UNI variant + its cart items before replacing with sized variants
+      const uniVariants = await prisma.productVariant.findMany({
+        where: { productId: existing.id, size: "UNI" },
+        select: { id: true },
       });
+      const uniIds = uniVariants.map((v: { id: string }) => v.id);
+      if (uniIds.length > 0) {
+        await prisma.cartItem.deleteMany({ where: { variantId: { in: uniIds } } });
+        await prisma.productVariant.deleteMany({ where: { id: { in: uniIds } } });
+      }
+      for (let i = 0; i < sizes.length; i++) {
+        await prisma.productVariant.upsert({
+          where: { productId_size: { productId: existing.id, size: sizes[i] } },
+          create: { productId: existing.id, size: sizes[i], stock: stocks[i], isActive: true },
+          update: { stock: stocks[i], isActive: true },
+        });
+      }
       updated++;
     } else {
       await prisma.product.create({
@@ -468,11 +487,7 @@ async function main() {
           ...p,
           isActive: true,
           variants: {
-            create: {
-              size: "UNI",
-              stock: p.stock,
-              isActive: true,
-            },
+            create: sizes.map((size, i) => ({ size, stock: stocks[i], isActive: true })),
           },
         },
       });

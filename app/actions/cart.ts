@@ -128,6 +128,53 @@ export async function updateCartItemQuantity(formData: FormData) {
   revalidatePath("/products");
 }
 
+export async function changeCartItemVariant(formData: FormData) {
+  const userId = await requireUserId();
+  const itemIdParsed = z.string().min(1).safeParse(formData.get("itemId"));
+  const newVariantIdParsed = z.string().min(1).safeParse(formData.get("newVariantId"));
+
+  if (!itemIdParsed.success || !newVariantIdParsed.success) {
+    throw new Error("Invalid input.");
+  }
+
+  const item = await prisma.cartItem.findUnique({
+    where: { id: itemIdParsed.data },
+    select: {
+      id: true, quantity: true,
+      cart: { select: { id: true, userId: true } },
+      variant: { select: { product: { select: { id: true } } } },
+    },
+  });
+
+  if (!item || item.cart.userId !== userId) throw new Error("Cart item not found.");
+
+  const newVariant = await prisma.productVariant.findUnique({
+    where: { id: newVariantIdParsed.data },
+    select: { id: true, stock: true, isActive: true, productId: true },
+  });
+
+  if (!newVariant || !newVariant.isActive || newVariant.productId !== item.variant.product.id) {
+    throw new Error("Variant not available.");
+  }
+
+  // If new variant already in cart, merge and delete old item
+  const existing = await prisma.cartItem.findUnique({
+    where: { cartId_variantId: { cartId: item.cart.id, variantId: newVariant.id } },
+    select: { id: true, quantity: true },
+  });
+
+  if (existing) {
+    const merged = Math.min(existing.quantity + item.quantity, newVariant.stock);
+    await prisma.cartItem.update({ where: { id: existing.id }, data: { quantity: merged } });
+    await prisma.cartItem.delete({ where: { id: item.id } });
+  } else {
+    const capped = Math.min(item.quantity, newVariant.stock);
+    await prisma.cartItem.update({ where: { id: item.id }, data: { variantId: newVariant.id, quantity: capped } });
+  }
+
+  revalidatePath("/cart");
+}
+
 export async function removeCartItem(formData: FormData) {
   const userId = await requireUserId();
   const itemIdParsed = z.string().min(1).safeParse(formData.get("itemId"));
