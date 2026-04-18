@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   return Response.json({
-    items: items.map((item) => ({
+    items: items.map((item: (typeof items)[0]) => ({
       id: item.id,
       name: item.name,
       slug: item.slug,
