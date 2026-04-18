@@ -53,8 +53,9 @@ export async function checkoutFromCart() {
       }
     }
 
+    type CartItem = (typeof cart.items)[number];
     const subtotalCents = cart.items.reduce(
-      (sum: number, item) => sum + item.product.priceCents * item.quantity,
+      (sum: number, item: CartItem) => sum + item.product.priceCents * item.quantity,
       0
     );
     const discountCents = 0;
