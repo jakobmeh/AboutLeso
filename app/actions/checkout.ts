@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { getShippingCents } from "@/lib/pricing";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 async function requireUser() {
   const session = await auth();
@@ -118,7 +119,7 @@ export async function checkoutFromCart(formData: FormData) {
     });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = getAppBaseUrl();
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import nodemailer from "nodemailer";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
@@ -49,10 +50,11 @@ export async function sendStockAlerts(variantId: string) {
   const { variant } = alerts[0];
   const productName = variant.product.name;
   const size = variant.size;
-  const productUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/products/${variant.product.slug}`;
+  const productUrl = `${getAppBaseUrl()}/products/${variant.product.slug}`;
+  type StockAlertWithVariant = (typeof alerts)[0];
 
   await Promise.all(
-    alerts.map((alert) =>
+    alerts.map((alert: StockAlertWithVariant) =>
       transporter.sendMail({
         from: `"${process.env.BREVO_FROM_NAME}" <${process.env.BREVO_FROM_EMAIL}>`,
         to: alert.email,
