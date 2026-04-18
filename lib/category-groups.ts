@@ -54,5 +54,5 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
 ];
 
 export function getGroup(slug: string): CategoryGroup | undefined {
-  return CATEGORY_GROUPS.find((g) => g.slug === slug);
+  return CATEGORY_GROUPS.find((g: CategoryGroup) => g.slug === slug);
 }

@@ -10,6 +10,9 @@ export async function GET(req: NextRequest) {
     select: { slug: true, name: true, priceCents: true, compareAtPriceCents: true, imageUrl: true },
   });
 
-  const ordered = slugs.map((s) => products.find((p) => p.slug === s)).filter(Boolean);
+  type RecentProduct = (typeof products)[0];
+  const ordered = slugs
+    .map((s: string) => products.find((p: RecentProduct) => p.slug === s))
+    .filter((product): product is RecentProduct => Boolean(product));
   return NextResponse.json({ products: ordered });
 }

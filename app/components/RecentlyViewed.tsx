@@ -20,7 +20,7 @@ export function RecentlyViewed({ currentSlug }: { currentSlug: string }) {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    const slugs = getRecentlyViewed().filter((s) => s !== currentSlug).slice(0, 4);
+    const slugs = getRecentlyViewed().filter((s: string) => s !== currentSlug).slice(0, 4);
     if (slugs.length === 0) return;
 
     fetch(`/api/products/recent?slugs=${slugs.join(",")}`)
@@ -34,7 +34,7 @@ export function RecentlyViewed({ currentSlug }: { currentSlug: string }) {
     <div className="mt-16 border-t border-stone-100 pt-10">
       <h2 className="text-lg font-light tracking-tight text-stone-900 mb-6">Nedavno ogledano</h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {products.map((p) => (
+        {products.map((p: Product) => (
           <Link key={p.slug} href={`/products/${p.slug}`} className="group block">
             <div className="aspect-[3/4] bg-stone-100 overflow-hidden mb-2">
               {p.imageUrl ? (

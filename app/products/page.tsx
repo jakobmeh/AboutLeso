@@ -104,7 +104,11 @@ export default async function ProductsPage({
 
   const userId = session?.user?.id ?? null;
   const wishlistIds = userId
-    ? new Set((await prisma.wishlist.findMany({ where: { userId }, select: { productId: true } })).map((w) => w.productId))
+    ? new Set(
+        (await prisma.wishlist.findMany({ where: { userId }, select: { productId: true } })).map(
+          (w: { productId: string }) => w.productId
+        )
+      )
     : new Set<string>();
 
   const rawProducts = await prisma.product.findMany({

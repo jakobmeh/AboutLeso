@@ -31,5 +31,6 @@ export async function getWishlistIds(): Promise<string[]> {
     where: { userId: session.user.id },
     select: { productId: true },
   });
-  return items.map((w) => w.productId);
+  type WishlistItem = (typeof items)[0];
+  return items.map((w: WishlistItem) => w.productId);
 }

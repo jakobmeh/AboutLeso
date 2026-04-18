@@ -15,7 +15,7 @@ export function SizeChanger({
   variants: Variant[];
 }) {
   const [open, setOpen] = useState(false);
-  const current = variants.find((v) => v.id === currentVariantId);
+  const current = variants.find((v: Variant) => v.id === currentVariantId);
 
   if (variants.length <= 1) {
     return <span className="text-xs uppercase tracking-widest text-stone-500">{current?.size ?? "UNI"}</span>;
@@ -33,7 +33,7 @@ export function SizeChanger({
 
       {open && (
         <div className="absolute left-0 top-6 z-20 bg-white border border-stone-200 shadow-lg p-2 flex flex-wrap gap-1.5 min-w-[160px]">
-          {variants.map((v) => {
+          {variants.map((v: Variant) => {
             const isCurrent = v.id === currentVariantId;
             const outOfStock = v.stock === 0;
             return (

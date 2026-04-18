@@ -25,6 +25,8 @@ export default async function WishlistPage() {
       },
     },
   });
+  type WishlistEntry = (typeof items)[0];
+  type WishlistProductVariant = WishlistEntry["product"]["variants"][number];
 
   return (
     <div className="min-h-screen bg-white">
@@ -41,7 +43,7 @@ export default async function WishlistPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {items.map(({ product }) => {
+            {items.map(({ product }: WishlistEntry) => {
               const pct = product.compareAtPriceCents
                 ? Math.round(((product.compareAtPriceCents - product.priceCents) / product.compareAtPriceCents) * 100)
                 : 0;
@@ -81,7 +83,7 @@ export default async function WishlistPage() {
                     </div>
                     {inStock && (
                       <p className="text-xs text-stone-400 mt-1">
-                        {product.variants.map((v) => v.size).join(", ")}
+                        {product.variants.map((v: WishlistProductVariant) => v.size).join(", ")}
                       </p>
                     )}
                   </Link>

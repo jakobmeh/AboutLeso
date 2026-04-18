@@ -103,10 +103,10 @@ async function searchProducts(params: {
   if (products.length === 0) return "Ni najdenih izdelkov za to poizvedbo.";
 
   return products
-    .map((p) => {
+    .map((p: (typeof products)[0]) => {
       const price = `${(p.priceCents / 100).toFixed(2)} €`;
       const wasPrice = p.compareAtPriceCents ? ` ~~${(p.compareAtPriceCents / 100).toFixed(2)} €~~` : "";
-      const sizes = p.variants.length > 0 ? ` | Velikosti: ${p.variants.map((v) => v.size).join(", ")}` : " | Razprodano";
+      const sizes = p.variants.length > 0 ? ` | Velikosti: ${p.variants.map((v: (typeof p.variants)[number]) => v.size).join(", ")}` : " | Razprodano";
       return `• **${p.name}** — ${price}${wasPrice}${sizes} | [Oglej si](/products/${p.slug})`;
     })
     .join("\n");
@@ -138,7 +138,7 @@ async function getOrderStatus(userId: string | null, orderId: string) {
     `Naročilo **#${order.id.slice(0, 8)}**\n` +
     `Status: ${statusMap[order.status] ?? order.status}\n` +
     `Skupaj: ${(order.totalCents / 100).toFixed(2)} €\n` +
-    `Artikli: ${order.items.map((i) => `${i.productName} (${i.productSize}) ×${i.quantity}`).join(", ")}`
+    `Artikli: ${order.items.map((i: (typeof order.items)[number]) => `${i.productName} (${i.productSize}) ×${i.quantity}`).join(", ")}`
   );
 }
 

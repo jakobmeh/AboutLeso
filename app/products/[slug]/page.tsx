@@ -56,7 +56,7 @@ export default async function ProductPage({
     (s: number, v: ProductVariantItem) => s + v.stock, 0
   );
 
-  const savedIds = new Set(wishlistIds.map((w) => w.productId));
+  const savedIds = new Set(wishlistIds.map((w: { productId: string }) => w.productId));
   const isSaved = savedIds.has(product.id);
 
   const avgRating = product.reviews.length > 0
