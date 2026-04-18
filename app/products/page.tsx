@@ -1,27 +1,40 @@
 import Link from "next/link";
-import type { Prisma } from "@/app/generated/prisma/client";
 import { auth } from "@/auth";
 import { addToCart } from "@/app/actions/cart";
 import { prisma } from "@/lib/prisma";
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
+type ProductFindManyArgs = NonNullable<Parameters<typeof prisma.product.findMany>[0]>;
+type ProductWhere = NonNullable<ProductFindManyArgs["where"]>;
+type ProductOrderBy = NonNullable<ProductFindManyArgs["orderBy"]>;
 
 function single(value: string | string[] | undefined) {
   if (Array.isArray(value)) return value[0] ?? "";
   return value ?? "";
 }
 
-function getOrderBy(sort: string): NonNullable<Prisma.ProductFindManyArgs["orderBy"]> {
+const ORDER_BY_NEWEST: ProductOrderBy = [{ createdAt: "desc" as const }];
+const ORDER_BY_PRICE_ASC: ProductOrderBy = [
+  { priceCents: "asc" as const },
+  { createdAt: "desc" as const },
+];
+const ORDER_BY_PRICE_DESC: ProductOrderBy = [
+  { priceCents: "desc" as const },
+  { createdAt: "desc" as const },
+];
+const ORDER_BY_NAME_ASC: ProductOrderBy = [{ name: "asc" as const }, { createdAt: "desc" as const }];
+
+function getOrderBy(sort: string) {
   switch (sort) {
     case "price_asc":
-      return [{ priceCents: "asc" }, { createdAt: "desc" }];
+      return ORDER_BY_PRICE_ASC;
     case "price_desc":
-      return [{ priceCents: "desc" }, { createdAt: "desc" }];
+      return ORDER_BY_PRICE_DESC;
     case "name_asc":
-      return [{ name: "asc" }, { createdAt: "desc" }];
+      return ORDER_BY_NAME_ASC;
     case "newest":
     default:
-      return [{ createdAt: "desc" }];
+      return ORDER_BY_NEWEST;
   }
 }
 
@@ -43,7 +56,7 @@ export default async function ProductsPage({
   const audienceId = single(resolved.audienceId).trim();
   const sort = single(resolved.sort).trim() || "newest";
 
-  const where: Prisma.ProductWhereInput = { isActive: true };
+  const where: ProductWhere = { isActive: true };
 
   if (q) {
     where.OR = [

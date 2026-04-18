@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { removeCartItem, updateCartItemQuantity } from "@/app/actions/cart";
+import { checkoutFromCart } from "@/app/actions/checkout";
 import { prisma } from "@/lib/prisma";
 
 function formatPrice(cents: number) {
@@ -127,9 +128,22 @@ export default async function CartPage() {
                 <p className="text-sm text-stone-700">
                   Subtotal: <span className="font-medium text-stone-900">{formatPrice(subtotalCents)}</span>
                 </p>
-                <p className="mt-2 text-xs uppercase tracking-widest text-stone-500">
-                  Checkout comes in next step.
-                </p>
+                <div className="mt-4 flex items-center gap-3">
+                  <form action={checkoutFromCart}>
+                    <button
+                      type="submit"
+                      className="bg-stone-800 px-4 py-2 text-xs tracking-widest uppercase text-white hover:bg-stone-900"
+                    >
+                      Checkout
+                    </button>
+                  </form>
+                  <Link
+                    href="/orders"
+                    className="border border-stone-300 px-4 py-2 text-xs tracking-widest uppercase text-stone-600 hover:text-stone-800"
+                  >
+                    My orders
+                  </Link>
+                </div>
               </div>
             </>
           )}

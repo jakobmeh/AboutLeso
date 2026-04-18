@@ -1,6 +1,9 @@
 import type { NextRequest } from "next/server";
-import type { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+
+type ProductFindManyArgs = NonNullable<Parameters<typeof prisma.product.findMany>[0]>;
+type ProductWhere = NonNullable<ProductFindManyArgs["where"]>;
+type ProductOrderBy = NonNullable<ProductFindManyArgs["orderBy"]>;
 
 function parsePositiveInt(value: string | null, fallback: number, max: number) {
   const parsed = Number(value);
@@ -8,17 +11,28 @@ function parsePositiveInt(value: string | null, fallback: number, max: number) {
   return Math.min(parsed, max);
 }
 
-function getOrderBy(sort: string): NonNullable<Prisma.ProductFindManyArgs["orderBy"]> {
+const ORDER_BY_NEWEST: ProductOrderBy = [{ createdAt: "desc" as const }];
+const ORDER_BY_PRICE_ASC: ProductOrderBy = [
+  { priceCents: "asc" as const },
+  { createdAt: "desc" as const },
+];
+const ORDER_BY_PRICE_DESC: ProductOrderBy = [
+  { priceCents: "desc" as const },
+  { createdAt: "desc" as const },
+];
+const ORDER_BY_NAME_ASC: ProductOrderBy = [{ name: "asc" as const }, { createdAt: "desc" as const }];
+
+function getOrderBy(sort: string) {
   switch (sort) {
     case "price_asc":
-      return [{ priceCents: "asc" }, { createdAt: "desc" }];
+      return ORDER_BY_PRICE_ASC;
     case "price_desc":
-      return [{ priceCents: "desc" }, { createdAt: "desc" }];
+      return ORDER_BY_PRICE_DESC;
     case "name_asc":
-      return [{ name: "asc" }, { createdAt: "desc" }];
+      return ORDER_BY_NAME_ASC;
     case "newest":
     default:
-      return [{ createdAt: "desc" }];
+      return ORDER_BY_NEWEST;
   }
 }
 
@@ -36,7 +50,7 @@ export async function GET(request: NextRequest) {
   const limit = parsePositiveInt(searchParams.get("limit"), 24, 100);
   const skip = (page - 1) * limit;
 
-  const where: Prisma.ProductWhereInput = {};
+  const where: ProductWhere = {};
 
   if (q) {
     where.OR = [
