@@ -31,7 +31,7 @@ export default async function CartPage() {
   });
 
   const items = cart?.items ?? [];
-  const subtotalCents = items.reduce((sum, item) => sum + item.product.priceCents * item.quantity, 0);
+  const subtotalCents = items.reduce((sum: number, item) => sum + item.product.priceCents * item.quantity, 0);
   const shippingFree = subtotalCents >= 8000;
 
   return (
