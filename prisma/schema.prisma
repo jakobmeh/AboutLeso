@@ -185,6 +185,7 @@ model CartItem {
 model Order {
   id              String      @id @default(cuid())
   userId          String
+  stripeSessionId String?     @unique
   status          OrderStatus @default(CONFIRMED)
   subtotalCents   Int
   discountCents   Int         @default(0)
