@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
-async function requireUserId() {
+async function requireUser() {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -13,16 +14,20 @@ async function requireUserId() {
     redirect("/login");
   }
 
-  return userId;
+  return {
+    id: userId,
+    email: session.user.email ?? null,
+    name: session.user.name ?? null,
+  };
 }
 
 export async function checkoutFromCart(formData: FormData) {
-  const userId = await requireUserId();
+  const user = await requireUser();
   const codeInput = ((formData.get("creatorCode") as string) ?? "").trim().toUpperCase();
 
-  const orderId = await prisma.$transaction(async (tx) => {
+  const checkoutResult = await prisma.$transaction(async (tx) => {
     const cart = await tx.cart.findUnique({
-      where: { userId },
+      where: { userId: user.id },
       include: {
         items: {
           include: {
@@ -76,7 +81,7 @@ export async function checkoutFromCart(formData: FormData) {
 
     const order = await tx.order.create({
       data: {
-        userId,
+        userId: user.id,
         status: "CONFIRMED",
         subtotalCents,
         discountCents,
@@ -109,8 +114,45 @@ export async function checkoutFromCart(formData: FormData) {
       where: { cartId: cart.id },
     });
 
-    return order.id;
+    return {
+      orderId: order.id,
+      subtotalCents,
+      discountCents,
+      totalCents,
+      creatorCode: creatorCodeRecord?.code ?? null,
+      items: cart.items.map((item: CartItemType) => ({
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPriceCents: item.product.priceCents,
+        lineTotalCents: item.product.priceCents * item.quantity,
+      })),
+    };
   });
+
+  let recipientEmail = user.email?.trim() ?? "";
+  if (!recipientEmail) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { email: true },
+    });
+    recipientEmail = dbUser?.email ?? "";
+  }
+
+  if (recipientEmail) {
+    try {
+      await sendOrderConfirmationEmail(recipientEmail, {
+        orderId: checkoutResult.orderId,
+        customerName: user.name,
+        subtotalCents: checkoutResult.subtotalCents,
+        discountCents: checkoutResult.discountCents,
+        totalCents: checkoutResult.totalCents,
+        creatorCode: checkoutResult.creatorCode,
+        items: checkoutResult.items,
+      });
+    } catch (error) {
+      console.error("Order confirmation email failed:", error);
+    }
+  }
 
   revalidatePath("/products");
   revalidatePath("/cart");
@@ -118,5 +160,5 @@ export async function checkoutFromCart(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/creator");
 
-  redirect(`/orders?success=1&orderId=${orderId}`);
+  redirect(`/orders?success=1&orderId=${checkoutResult.orderId}`);
 }
