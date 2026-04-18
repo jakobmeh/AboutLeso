@@ -99,6 +99,19 @@ export default async function OrdersPage({
                   <span className={`inline-block border px-2 py-0.5 text-xs tracking-widest uppercase ${statusColor[order.status] ?? "bg-stone-50 text-stone-600 border-stone-200"}`}>
                     {statusLabel[order.status] ?? order.status}
                   </span>
+                  {order.trackingNumber && (
+                    <a
+                      href={`https://tracking.dpd.de/status/sl_SI/parcel/${order.trackingNumber}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 flex items-center gap-1.5 text-xs text-stone-600 hover:text-stone-900 underline underline-offset-2 transition-colors"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                      </svg>
+                      Sledi pošiljki DPD
+                    </a>
+                  )}
                 </div>
                 <div className="space-y-1 text-right">
                   <p className="text-xs tracking-widest uppercase text-stone-400">Skupaj</p>

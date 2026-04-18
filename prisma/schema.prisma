@@ -40,6 +40,8 @@ model User {
   orders      Order[]
   addresses   UserAddress[]
   creatorCode CreatorCode?
+  wishlists   Wishlist[]
+  reviews     Review[]
 }
 
 model Account {
@@ -151,6 +153,8 @@ model Product {
   audience Audience @relation(fields: [audienceId], references: [id], onDelete: Restrict)
   variants ProductVariant[]
   orderItems OrderItem[]
+  wishlists  Wishlist[]
+  reviews    Review[]
 
   @@index([categoryId])
   @@index([seasonId])
@@ -186,6 +190,7 @@ model Order {
   id              String      @id @default(cuid())
   userId          String
   stripeSessionId String?     @unique
+  trackingNumber  String?
   status          OrderStatus @default(CONFIRMED)
   subtotalCents   Int
   discountCents   Int         @default(0)
@@ -278,10 +283,51 @@ model ProductVariant {
   updatedAt DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  cartItems CartItem[]
-  orderItems OrderItem[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  stockAlerts StockAlert[]
 
   @@unique([productId, size])
   @@index([productId])
   @@index([size])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model StockAlert {
+  id               String   @id @default(cuid())
+  email            String
+  productVariantId String
+  createdAt        DateTime @default(now())
+
+  variant ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+
+  @@unique([email, productVariantId])
+  @@index([productVariantId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int
+  body      String?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
 }

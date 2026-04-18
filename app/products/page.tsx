@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { addToCart } from "@/app/actions/cart";
 import { prisma } from "@/lib/prisma";
 import { getGroup } from "@/lib/category-groups";
+import { WishlistButton } from "@/app/components/WishlistButton";
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
 type ProductFindManyArgs = NonNullable<Parameters<typeof prisma.product.findMany>[0]>;
@@ -100,6 +101,11 @@ export default async function ProductsPage({
   if (onlySale) where.compareAtPriceCents = { not: null };
   if (minPrice > 0) where.priceCents = { ...(where.priceCents as object), gte: Math.round(minPrice * 100) };
   if (maxPrice > 0) where.priceCents = { ...(where.priceCents as object), lte: Math.round(maxPrice * 100) };
+
+  const userId = session?.user?.id ?? null;
+  const wishlistIds = userId
+    ? new Set((await prisma.wishlist.findMany({ where: { userId }, select: { productId: true } })).map((w) => w.productId))
+    : new Set<string>();
 
   const rawProducts = await prisma.product.findMany({
     where,
@@ -499,6 +505,16 @@ export default async function ProductsPage({
                             </span>
                           )}
                         </div>
+                        {/* Wishlist heart */}
+                        {userId && (
+                          <div className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <WishlistButton
+                              productId={item.id}
+                              initialSaved={wishlistIds.has(item.id)}
+                              className="w-8 h-8 bg-white/90 rounded-full shadow hover:bg-white"
+                            />
+                          </div>
+                        )}
                         {/* Quick add — slides up on hover */}
                         {totalStock > 0 && (
                           <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">

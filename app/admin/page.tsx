@@ -18,6 +18,7 @@ import {
   revokeCreatorCode,
   searchCreatorUser,
 } from "@/app/actions/admin-creator";
+import { setTrackingNumber, setOrderStatus } from "@/app/actions/admin-orders";
 import { requireRole } from "@/lib/authz";
 import { formatVariantStocks, totalVariantStock } from "@/lib/product-variants";
 import { prisma } from "@/lib/prisma";
@@ -447,7 +448,7 @@ export default async function AdminPage({
   const successMessage = one(resolved.success).trim();
   const lookupEmail = one(resolved.lookup).trim();
 
-  const [categories, seasons, audiences, products, creatorCodes] = await Promise.all([
+  const [categories, seasons, audiences, products, creatorCodes, allOrders] = await Promise.all([
     prisma.category.findMany({ orderBy: { name: "asc" } }),
     prisma.season.findMany({ orderBy: { name: "asc" } }),
     prisma.audience.findMany({ orderBy: { name: "asc" } }),
@@ -470,6 +471,14 @@ export default async function AdminPage({
         _count: { select: { orders: true } },
       },
     }),
+    prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: {
+        user: { select: { name: true, email: true } },
+        items: { select: { productName: true, productSize: true, quantity: true } },
+      },
+    }),
   ]);
 
   type CreatorCodeRow = (typeof creatorCodes)[0];
@@ -484,6 +493,7 @@ export default async function AdminPage({
 
   const tabs = [
     { key: "products", label: "Izdelki" },
+    { key: "orders", label: "Naročila" },
     { key: "creators", label: "Kreatorji" },
     { key: "taxonomy", label: "Taksonomija" },
   ];
@@ -695,6 +705,83 @@ export default async function AdminPage({
             </div>
           </section>
         )}
+
+        {/* Orders section */}
+        {section === "orders" && (() => {
+          type AdminOrder = (typeof allOrders)[0];
+          const statusLabel: Record<string, string> = { PENDING: "V obdelavi", CONFIRMED: "Potrjeno", CANCELLED: "Preklicano" };
+          const statusColor: Record<string, string> = {
+            PENDING: "text-amber-700", CONFIRMED: "text-green-700", CANCELLED: "text-red-600"
+          };
+          return (
+            <section className="rounded border border-stone-200 bg-white p-6 space-y-4">
+              <h2 className="text-lg font-medium text-stone-800">Naročila ({allOrders.length})</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-stone-200 text-xs tracking-widest uppercase text-stone-400">
+                      <th className="py-2 pr-4 font-medium">ID</th>
+                      <th className="py-2 pr-4 font-medium">Stranka</th>
+                      <th className="py-2 pr-4 font-medium">Datum</th>
+                      <th className="py-2 pr-4 font-medium">Znesek</th>
+                      <th className="py-2 pr-4 font-medium">Status</th>
+                      <th className="py-2 pr-4 font-medium">Tracking</th>
+                      <th className="py-2 font-medium">Akcije</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {allOrders.map((order: AdminOrder) => (
+                      <tr key={order.id}>
+                        <td className="py-3 pr-4 font-mono text-xs text-stone-500">{order.id.slice(0, 12)}…</td>
+                        <td className="py-3 pr-4">
+                          <p className="text-stone-800 text-xs">{order.user.name ?? "—"}</p>
+                          <p className="text-stone-400 text-xs">{order.user.email}</p>
+                        </td>
+                        <td className="py-3 pr-4 text-xs text-stone-600">
+                          {new Intl.DateTimeFormat("sl-SI", { dateStyle: "short", timeStyle: "short" }).format(order.createdAt)}
+                        </td>
+                        <td className="py-3 pr-4 text-xs font-medium text-stone-800">
+                          {(order.totalCents / 100).toFixed(2)} €
+                        </td>
+                        <td className="py-3 pr-4">
+                          <form action={setOrderStatus} className="flex items-center gap-1">
+                            <input type="hidden" name="orderId" value={order.id} />
+                            <select name="status" defaultValue={order.status}
+                              className={`border border-stone-200 px-2 py-1 text-xs outline-none bg-white ${statusColor[order.status] ?? ""}`}>
+                              <option value="PENDING">V obdelavi</option>
+                              <option value="CONFIRMED">Potrjeno</option>
+                              <option value="CANCELLED">Preklicano</option>
+                            </select>
+                            <button type="submit" className="text-xs bg-stone-800 text-white px-2 py-1 hover:bg-stone-900">✓</button>
+                          </form>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <form action={setTrackingNumber} className="flex items-center gap-1">
+                            <input type="hidden" name="orderId" value={order.id} />
+                            <input type="text" name="trackingNumber" defaultValue={order.trackingNumber ?? ""}
+                              placeholder="DPD številka"
+                              className="border border-stone-200 px-2 py-1 text-xs w-32 outline-none focus:border-stone-500" />
+                            <button type="submit" className="text-xs bg-stone-800 text-white px-2 py-1 hover:bg-stone-900">✓</button>
+                          </form>
+                          {order.trackingNumber && (
+                            <a href={`https://tracking.dpd.de/status/sl_SI/parcel/${order.trackingNumber}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline mt-0.5 block">
+                              Sledenje ↗
+                            </a>
+                          )}
+                        </td>
+                        <td className="py-3 text-xs text-stone-500">
+                          {order.items.map((i) => `${i.productName} (${i.productSize ?? "?"}) ×${i.quantity}`).join(", ")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Taxonomy section */}
         {section === "taxonomy" && (

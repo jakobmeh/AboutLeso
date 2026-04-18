@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
   const msg = response.choices[0].message;
 
   if (msg.tool_calls && msg.tool_calls.length > 0) {
-    const toolCall = msg.tool_calls[0];
+    const toolCall = msg.tool_calls[0] as { id: string; function: { name: string; arguments: string } };
     const args = JSON.parse(toolCall.function.arguments);
 
     let toolResult = "";

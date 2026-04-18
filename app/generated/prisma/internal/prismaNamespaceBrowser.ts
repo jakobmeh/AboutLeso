@@ -67,7 +67,10 @@ export const ModelName = {
   UserAddress: 'UserAddress',
   CreatorCode: 'CreatorCode',
   OrderItem: 'OrderItem',
-  ProductVariant: 'ProductVariant'
+  ProductVariant: 'ProductVariant',
+  Wishlist: 'Wishlist',
+  StockAlert: 'StockAlert',
+  Review: 'Review'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -241,6 +244,7 @@ export const OrderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   stripeSessionId: 'stripeSessionId',
+  trackingNumber: 'trackingNumber',
   status: 'status',
   subtotalCents: 'subtotalCents',
   discountCents: 'discountCents',
@@ -323,6 +327,38 @@ export const ProductVariantScalarFieldEnum = {
 } as const
 
 export type ProductVariantScalarFieldEnum = (typeof ProductVariantScalarFieldEnum)[keyof typeof ProductVariantScalarFieldEnum]
+
+
+export const WishlistScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  productId: 'productId',
+  createdAt: 'createdAt'
+} as const
+
+export type WishlistScalarFieldEnum = (typeof WishlistScalarFieldEnum)[keyof typeof WishlistScalarFieldEnum]
+
+
+export const StockAlertScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  productVariantId: 'productVariantId',
+  createdAt: 'createdAt'
+} as const
+
+export type StockAlertScalarFieldEnum = (typeof StockAlertScalarFieldEnum)[keyof typeof StockAlertScalarFieldEnum]
+
+
+export const ReviewScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  productId: 'productId',
+  rating: 'rating',
+  body: 'body',
+  createdAt: 'createdAt'
+} as const
+
+export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -102,3 +102,18 @@ export type OrderItem = Prisma.OrderItemModel
  * 
  */
 export type ProductVariant = Prisma.ProductVariantModel
+/**
+ * Model Wishlist
+ * 
+ */
+export type Wishlist = Prisma.WishlistModel
+/**
+ * Model StockAlert
+ * 
+ */
+export type StockAlert = Prisma.StockAlertModel
+/**
+ * Model Review
+ * 
+ */
+export type Review = Prisma.ReviewModel
