@@ -8,15 +8,18 @@ import { prisma } from "@/lib/prisma";
 
 const IdSchema = z.string().trim().min(1, { message: "Invalid id." });
 
+const PriceString = z
+  .string()
+  .trim()
+  .refine((v) => !Number.isNaN(Number(v)) && Number(v) >= 0.01 && Number(v) <= 99999, {
+    message: "Invalid price.",
+  });
+
 const CreateProductSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(500).optional(),
-  price: z
-    .string()
-    .trim()
-    .refine((value) => !Number.isNaN(Number(value)) && Number(value) >= 0.01 && Number(value) <= 99999, {
-      message: "Invalid price.",
-    }),
+  price: PriceString,
+  compareAtPrice: z.string().trim().optional(),
   stock: z
     .string()
     .trim()
@@ -67,6 +70,7 @@ export async function createProduct(formData: FormData) {
     name: formData.get("name"),
     description: formData.get("description"),
     price: formData.get("price"),
+    compareAtPrice: formData.get("compareAtPrice"),
     stock: formData.get("stock"),
     categoryId: formData.get("categoryId"),
     seasonId: formData.get("seasonId"),
@@ -77,15 +81,21 @@ export async function createProduct(formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  const { name, description, price, stock, categoryId, seasonId, audienceId } = parsed.data;
+  const { name, description, price, compareAtPrice, stock, categoryId, seasonId, audienceId } = parsed.data;
   const slug = await makeUniqueProductSlug(name);
+  const priceCents = Math.round(Number(price) * 100);
+  const compareAtPriceCents =
+    compareAtPrice && Number(compareAtPrice) > Number(price)
+      ? Math.round(Number(compareAtPrice) * 100)
+      : null;
 
   await prisma.product.create({
     data: {
       name,
       slug,
       description: description || null,
-      priceCents: Math.round(Number(price) * 100),
+      priceCents,
+      compareAtPriceCents,
       stock: Number(stock),
       categoryId,
       seasonId,
@@ -120,6 +130,7 @@ export async function updateProduct(formData: FormData) {
     name: formData.get("name"),
     description: formData.get("description"),
     price: formData.get("price"),
+    compareAtPrice: formData.get("compareAtPrice"),
     stock: formData.get("stock"),
     categoryId: formData.get("categoryId"),
     seasonId: formData.get("seasonId"),
@@ -130,8 +141,13 @@ export async function updateProduct(formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  const { id, name, description, price, stock, categoryId, seasonId, audienceId } = parsed.data;
+  const { id, name, description, price, compareAtPrice, stock, categoryId, seasonId, audienceId } = parsed.data;
   const slug = await makeUniqueProductSlug(name, id);
+  const priceCents = Math.round(Number(price) * 100);
+  const compareAtPriceCents =
+    compareAtPrice && Number(compareAtPrice) > Number(price)
+      ? Math.round(Number(compareAtPrice) * 100)
+      : null;
 
   await prisma.product.update({
     where: { id },
@@ -139,7 +155,8 @@ export async function updateProduct(formData: FormData) {
       name,
       slug,
       description: description || null,
-      priceCents: Math.round(Number(price) * 100),
+      priceCents,
+      compareAtPriceCents,
       stock: Number(stock),
       categoryId,
       seasonId,

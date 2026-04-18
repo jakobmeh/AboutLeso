@@ -33,6 +33,7 @@ type ProductRow = {
   name: string;
   description: string | null;
   priceCents: number;
+  compareAtPriceCents: number | null;
   stock: number;
   categoryId: string;
   seasonId: string;
@@ -166,7 +167,15 @@ function ProductSection({
             min="0.01"
             step="0.01"
             required
-            placeholder="Price (EUR)"
+            placeholder="Cena (EUR)"
+            className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
+          />
+          <input
+            type="number"
+            name="compareAtPrice"
+            min="0.01"
+            step="0.01"
+            placeholder="Orig. cena za popust (neobvezno)"
             className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
           />
           <input
@@ -319,6 +328,16 @@ function ProductSection({
                           step="0.01"
                           defaultValue={(item.priceCents / 100).toFixed(2)}
                           required
+                          placeholder="Cena"
+                          className="border border-stone-300 px-2 py-1 text-xs text-stone-800 outline-none focus:border-stone-600"
+                        />
+                        <input
+                          type="number"
+                          name="compareAtPrice"
+                          min="0.01"
+                          step="0.01"
+                          defaultValue={item.compareAtPriceCents ? (item.compareAtPriceCents / 100).toFixed(2) : ""}
+                          placeholder="Orig. cena"
                           className="border border-stone-300 px-2 py-1 text-xs text-stone-800 outline-none focus:border-stone-600"
                         />
                         <input

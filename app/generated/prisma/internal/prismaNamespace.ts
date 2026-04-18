@@ -1682,6 +1682,7 @@ export const ProductScalarFieldEnum = {
   slug: 'slug',
   description: 'description',
   priceCents: 'priceCents',
+  compareAtPriceCents: 'compareAtPriceCents',
   stock: 'stock',
   imageUrl: 'imageUrl',
   isActive: 'isActive',
