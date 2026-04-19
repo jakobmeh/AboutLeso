@@ -34,6 +34,7 @@ type ProductRow = {
   id: string;
   name: string;
   description: string | null;
+  imageUrl: string | null;
   priceCents: number;
   compareAtPriceCents: number | null;
   stock: number;
@@ -165,6 +166,12 @@ function ProductSection({
             className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
           />
           <input
+            type="text"
+            name="imageUrl"
+            placeholder="Slika URL (https://...)"
+            className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
+          />
+          <input
             type="number"
             name="price"
             min="0.01"
@@ -259,6 +266,7 @@ function ProductSection({
           <thead>
             <tr className="border-b border-stone-200 text-stone-500">
               <th className="py-2 pr-4 font-medium">Name</th>
+              <th className="py-2 pr-4 font-medium">Slika</th>
               <th className="py-2 pr-4 font-medium">Price</th>
               <th className="py-2 pr-4 font-medium">Velikosti/Zaloga</th>
               <th className="py-2 pr-4 font-medium">Category</th>
@@ -271,7 +279,7 @@ function ProductSection({
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-4 text-stone-400">
+                <td colSpan={9} className="py-4 text-stone-400">
                   No products yet.
                 </td>
               </tr>
@@ -280,6 +288,18 @@ function ProductSection({
                 <Fragment key={item.id}>
                   <tr className="border-b border-stone-100">
                     <td className="py-3 pr-4 text-stone-800">{item.name}</td>
+                    <td className="py-3 pr-4">
+                      {item.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="h-12 w-12 rounded border border-stone-200 object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs text-stone-400">Brez slike</span>
+                      )}
+                    </td>
                     <td className="py-3 pr-4 text-stone-700">{formatPrice(item.priceCents)}</td>
                     <td className="py-3 pr-4 text-stone-700">
                       <p className="font-medium">Skupaj: {totalVariantStock(item.variants)}</p>
@@ -323,7 +343,7 @@ function ProductSection({
                     </td>
                   </tr>
                   <tr className="border-b border-stone-100 bg-stone-50">
-                    <td colSpan={8} className="px-3 py-3">
+                    <td colSpan={9} className="px-3 py-3">
                       <form action={updateProduct} className="grid grid-cols-1 gap-2 md:grid-cols-7">
                         <input type="hidden" name="id" value={item.id} />
                         <input
@@ -331,6 +351,13 @@ function ProductSection({
                           name="name"
                           defaultValue={item.name}
                           required
+                          className="border border-stone-300 px-2 py-1 text-xs text-stone-800 outline-none focus:border-stone-600"
+                        />
+                        <input
+                          type="text"
+                          name="imageUrl"
+                          defaultValue={item.imageUrl ?? ""}
+                          placeholder="Slika URL"
                           className="border border-stone-300 px-2 py-1 text-xs text-stone-800 outline-none focus:border-stone-600"
                         />
                         <input

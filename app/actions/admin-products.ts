@@ -22,6 +22,7 @@ const PriceString = z
 const CreateProductSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(500).optional(),
+  imageUrl: z.string().trim().max(1000).optional(),
   price: PriceString,
   compareAtPrice: z.string().trim().optional(),
   stock: z
@@ -74,6 +75,7 @@ export async function createProduct(formData: FormData) {
   const parsed = CreateProductSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
+    imageUrl: formData.get("imageUrl"),
     price: formData.get("price"),
     compareAtPrice: formData.get("compareAtPrice"),
     stock: formData.get("stock"),
@@ -90,6 +92,7 @@ export async function createProduct(formData: FormData) {
   const {
     name,
     description,
+    imageUrl,
     price,
     compareAtPrice,
     stock,
@@ -117,6 +120,7 @@ export async function createProduct(formData: FormData) {
       name,
       slug,
       description: description || null,
+      imageUrl: imageUrl || null,
       priceCents,
       compareAtPriceCents,
       stock: stockTotal,
@@ -161,6 +165,7 @@ export async function updateProduct(formData: FormData) {
     id: formData.get("id"),
     name: formData.get("name"),
     description: formData.get("description"),
+    imageUrl: formData.get("imageUrl"),
     price: formData.get("price"),
     compareAtPrice: formData.get("compareAtPrice"),
     stock: formData.get("stock"),
@@ -178,6 +183,7 @@ export async function updateProduct(formData: FormData) {
     id,
     name,
     description,
+    imageUrl,
     price,
     compareAtPrice,
     stock,
@@ -207,6 +213,7 @@ export async function updateProduct(formData: FormData) {
         name,
         slug,
         description: description || null,
+        imageUrl: imageUrl || null,
         priceCents,
         compareAtPriceCents,
         stock: stockTotal,
