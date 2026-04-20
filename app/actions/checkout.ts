@@ -69,9 +69,17 @@ export async function checkoutFromCart(formData: FormData) {
   // Validate creator code
   let creatorCodeRecord = null;
   if (codeInput) {
-    creatorCodeRecord = await prisma.creatorCode.findUnique({
+    const found = await prisma.creatorCode.findUnique({
       where: { code: codeInput, isActive: true },
     });
+    if (found) {
+      if (found.expiresAt && found.expiresAt < new Date()) {
+        // Auto-deactivate expired code
+        await prisma.creatorCode.update({ where: { id: found.id }, data: { isActive: false } });
+      } else {
+        creatorCodeRecord = found;
+      }
+    }
   }
 
   const discountCents = creatorCodeRecord
@@ -95,18 +103,6 @@ export async function checkoutFromCart(formData: FormData) {
     })
   );
 
-  // Discount as negative line item
-  if (discountCents > 0) {
-    lineItems.push({
-      price_data: {
-        currency: "eur",
-        product_data: { name: `Popust (${creatorCodeRecord!.code})` },
-        unit_amount: -discountCents,
-      },
-      quantity: 1,
-    });
-  }
-
   // Shipping as line item (if not free)
   if (shippingCents > 0) {
     lineItems.push({
@@ -119,6 +115,18 @@ export async function checkoutFromCart(formData: FormData) {
     });
   }
 
+  // Create Stripe coupon for discount (negative line items are not allowed)
+  let stripeCouponId: string | undefined;
+  if (discountCents > 0) {
+    const coupon = await stripe.coupons.create({
+      amount_off: discountCents,
+      currency: "eur",
+      duration: "once",
+      name: `Popust (${creatorCodeRecord!.code})`,
+    });
+    stripeCouponId = coupon.id;
+  }
+
   const baseUrl = getAppBaseUrl();
 
   const session = await stripe.checkout.sessions.create({
@@ -126,6 +134,7 @@ export async function checkoutFromCart(formData: FormData) {
     line_items: lineItems,
     payment_method_types: ["card", "paypal"],
     customer_email: user.email ?? undefined,
+    ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
     metadata: {
       userId: user.id,
       addressId: shippingAddress.id,

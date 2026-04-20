@@ -22,6 +22,8 @@ export async function assignCreatorCode(formData: FormData) {
   const code = ((formData.get("code") as string) ?? "").trim().toUpperCase();
   const discountPercent = parseInt((formData.get("discountPercent") as string) ?? "0", 10);
   const commissionPercent = parseInt((formData.get("commissionPercent") as string) ?? "0", 10);
+  const expiresAtRaw = ((formData.get("expiresAt") as string) ?? "").trim();
+  const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
 
   if (
     !userId ||
@@ -32,7 +34,8 @@ export async function assignCreatorCode(formData: FormData) {
     discountPercent < 0 ||
     discountPercent > 80 ||
     commissionPercent < 0 ||
-    commissionPercent > 50
+    commissionPercent > 50 ||
+    (expiresAt && isNaN(expiresAt.getTime()))
   ) {
     redirect("/admin?section=creators&error=invalid");
   }
@@ -45,8 +48,8 @@ export async function assignCreatorCode(formData: FormData) {
       });
       await tx.creatorCode.upsert({
         where: { userId },
-        create: { code, userId, discountPercent, commissionPercent },
-        update: { code, discountPercent, commissionPercent, isActive: true },
+        create: { code, userId, discountPercent, commissionPercent, expiresAt },
+        update: { code, discountPercent, commissionPercent, isActive: true, expiresAt },
       });
     });
   } catch {
@@ -55,6 +58,19 @@ export async function assignCreatorCode(formData: FormData) {
 
   revalidatePath("/admin");
   redirect("/admin?section=creators&success=1");
+}
+
+export async function deactivateCreatorCode(formData: FormData) {
+  await ensureAdmin();
+  const userId = ((formData.get("userId") as string) ?? "").trim();
+
+  await prisma.creatorCode.update({
+    where: { userId },
+    data: { isActive: false },
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin?section=creators");
 }
 
 export async function revokeCreatorCode(formData: FormData) {

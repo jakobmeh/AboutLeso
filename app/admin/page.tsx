@@ -15,6 +15,7 @@ import {
 } from "@/app/actions/admin-products";
 import {
   assignCreatorCode,
+  deactivateCreatorCode,
   revokeCreatorCode,
   searchCreatorUser,
 } from "@/app/actions/admin-creator";
@@ -510,11 +511,11 @@ export default async function AdminPage({
 
   type CreatorCodeRow = (typeof creatorCodes)[0];
 
-  let lookupUser: { id: string; email: string; name: string | null; role: Role; creatorCode: { code: string; discountPercent: number; commissionPercent: number } | null } | null = null;
+  let lookupUser: { id: string; email: string; name: string | null; role: Role; creatorCode: { code: string; discountPercent: number; commissionPercent: number; expiresAt: Date | null } | null } | null = null;
   if (lookupEmail) {
     lookupUser = await prisma.user.findUnique({
       where: { email: lookupEmail },
-      select: { id: true, email: true, name: true, role: true, creatorCode: { select: { code: true, discountPercent: true, commissionPercent: true } } },
+      select: { id: true, email: true, name: true, role: true, creatorCode: { select: { code: true, discountPercent: true, commissionPercent: true, expiresAt: true } } },
     });
   }
 
@@ -624,7 +625,7 @@ export default async function AdminPage({
                       </div>
                     </div>
 
-                    <form action={assignCreatorCode} className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                    <form action={assignCreatorCode} className="grid grid-cols-1 gap-3 md:grid-cols-5">
                       <input type="hidden" name="userId" value={lookupUser.id} />
                       <div>
                         <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">Koda</label>
@@ -661,6 +662,15 @@ export default async function AdminPage({
                           className="w-full border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
                         />
                       </div>
+                      <div>
+                        <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">Velja do (neobvezno)</label>
+                        <input
+                          type="date"
+                          name="expiresAt"
+                          defaultValue={lookupUser.creatorCode?.expiresAt ? new Date(lookupUser.creatorCode.expiresAt).toISOString().split("T")[0] : ""}
+                          className="w-full border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600"
+                        />
+                      </div>
                       <div className="flex items-end">
                         <button
                           type="submit"
@@ -672,15 +682,26 @@ export default async function AdminPage({
                     </form>
 
                     {lookupUser.creatorCode && lookupUser.role === "CREATOR" && (
-                      <form action={revokeCreatorCode}>
-                        <input type="hidden" name="userId" value={lookupUser.id} />
-                        <button
-                          type="submit"
-                          className="text-xs tracking-widest uppercase text-red-600 hover:text-red-700"
-                        >
-                          Prekliči kreator status
-                        </button>
-                      </form>
+                      <div className="flex gap-4">
+                        <form action={deactivateCreatorCode}>
+                          <input type="hidden" name="userId" value={lookupUser.id} />
+                          <button
+                            type="submit"
+                            className="text-xs tracking-widest uppercase text-amber-600 hover:text-amber-700"
+                          >
+                            Končaj kodo predčasno
+                          </button>
+                        </form>
+                        <form action={revokeCreatorCode}>
+                          <input type="hidden" name="userId" value={lookupUser.id} />
+                          <button
+                            type="submit"
+                            className="text-xs tracking-widest uppercase text-red-600 hover:text-red-700"
+                          >
+                            Prekliči kreator status
+                          </button>
+                        </form>
+                      </div>
                     )}
                   </div>
                 ) : (
@@ -704,7 +725,9 @@ export default async function AdminPage({
                         <th className="py-2 pr-4 font-medium">Popust</th>
                         <th className="py-2 pr-4 font-medium">Provizija</th>
                         <th className="py-2 pr-4 font-medium">Naročil</th>
+                        <th className="py-2 pr-4 font-medium">Velja do</th>
                         <th className="py-2 pr-4 font-medium">Status</th>
+                        <th className="py-2 pr-4 font-medium"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-100">
@@ -718,10 +741,28 @@ export default async function AdminPage({
                           <td className="py-3 pr-4 text-stone-700">{row.discountPercent}%</td>
                           <td className="py-3 pr-4 text-stone-700">{row.commissionPercent}%</td>
                           <td className="py-3 pr-4 text-stone-700">{row._count.orders}</td>
+                          <td className="py-3 pr-4 text-stone-600 text-xs">
+                            {row.expiresAt
+                              ? new Date(row.expiresAt).toLocaleDateString("sl-SI")
+                              : <span className="text-stone-300">—</span>}
+                          </td>
                           <td className="py-3 pr-4">
                             <span className={`text-xs tracking-widest uppercase font-medium ${row.isActive ? "text-green-700" : "text-red-500"}`}>
                               {row.isActive ? "Aktivna" : "Neaktivna"}
                             </span>
+                          </td>
+                          <td className="py-3">
+                            {row.isActive && (
+                              <form action={deactivateCreatorCode}>
+                                <input type="hidden" name="userId" value={row.user.id} />
+                                <button
+                                  type="submit"
+                                  className="text-xs tracking-widest uppercase text-amber-600 hover:text-amber-700 whitespace-nowrap"
+                                >
+                                  Končaj
+                                </button>
+                              </form>
+                            )}
                           </td>
                         </tr>
                       ))}

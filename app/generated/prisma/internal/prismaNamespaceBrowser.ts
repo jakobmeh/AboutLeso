@@ -293,6 +293,7 @@ export const CreatorCodeScalarFieldEnum = {
   discountPercent: 'discountPercent',
   commissionPercent: 'commissionPercent',
   isActive: 'isActive',
+  expiresAt: 'expiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
