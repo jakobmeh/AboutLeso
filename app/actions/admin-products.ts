@@ -315,7 +315,7 @@ export async function setBulkDiscount(formData: FormData) {
   });
 
   await prisma.$transaction(
-    products.map((p) => {
+    products.map((p: { id: string; priceCents: number; compareAtPriceCents: number | null }) => {
       if (discountPercent === 0) {
         return prisma.product.update({
           where: { id: p.id },
