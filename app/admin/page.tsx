@@ -600,11 +600,18 @@ export default async function AdminPage({
     }
   }
   const analyticsNonCancelled = analyticsOrders.filter((o) => o.status !== "CANCELLED");
-  const analyticsRevTotal = analyticsDaily.reduce((s, d) => s + d.revCents, 0);
+  const analyticsRevTotal = analyticsDaily.reduce(
+    (sum: number, day: (typeof analyticsDaily)[number]) => sum + day.revCents,
+    0
+  );
   const analyticsOrdersTotal = analyticsNonCancelled.length;
   const analyticsAvgOrder = analyticsOrdersTotal > 0 ? Math.round(analyticsRevTotal / analyticsOrdersTotal) : 0;
+  type AdminOrderRow = (typeof allOrders)[number];
   const analyticsStatusCounts = section === "analitika"
-    ? allOrders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc; }, {} as Record<string, number>)
+    ? allOrders.reduce((acc: Record<string, number>, order: AdminOrderRow) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
     : {} as Record<string, number>;
   const analyticsTopProducts: [string, number][] = [];
   if (section === "analitika") {
@@ -1165,7 +1172,10 @@ export default async function AdminPage({
               <div className="space-y-3">
                 {(["PENDING", "CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"] as const).map((status) => {
                   const count = analyticsStatusCounts[status] ?? 0;
-                  const total = Object.values(analyticsStatusCounts).reduce((a, b) => a + b, 0);
+                  const total = Object.values(analyticsStatusCounts).reduce(
+                    (sum: number, value: number) => sum + value,
+                    0
+                  );
                   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                   const labels: Record<string, string> = {
                     PENDING: "Čakanje", CONFIRMED: "Potrjeno", PREPARING: "V pripravi",
