@@ -35,7 +35,7 @@ const HERO: Record<string, {
       { label: "Obleke & krila", sub: "Midi, maxi in mini", img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["obleke"] },
       { label: "Petke & čevlji", sub: "Superge, škornji, petke", img: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["obutev"] },
       { label: "Jakne & plašči", sub: "Jesenski in zimski slogi", img: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["jakne"] },
-      { label: "Puloverji & jopici", sub: "Pleteno in mehko", img: "https://images.unsplash.com/photo-1576566588047-6b4486b4522?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["puloverji", "jopici"] },
+      { label: "Puloverji & jopici", sub: "Pleteno in mehko", img: "https://orsay.cdn.csagdev.cz/zoh4eiLi/IMG/31536000/H-61JhM_dSr4Nr327vYvgp31UvyC4MkyOvlDVyU1qYw/fill/3840/5116/sm/1/aHR0cHM6Ly9vcnNheS5jZG4tYmUuY3NhZ2Rldi5jei9jYXRhbG9nL2l0ZW0tcGljdHVyZXMvNGI5YzQzYzgtYzc0MC00ZjEzLWI1MWItM2RjNDM5MWRhYjc3ZjIwNjlhNjM1N2UyZmM2NGE3M2Y3NmIxZTZmMzhhOWYtMTU1ODM0LmpwZw==", categorySlugs: ["puloverji", "jopici"] },
       { label: "Majice & bluze", sub: "Casual in elegantno", img: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["srajce", "majice"] },
       { label: "Hlače", sub: "Ravne, palazzo, cargo", img: "https://images.unsplash.com/photo-1542219550-37153d387c27?w=480&h=640&fit=crop&crop=center&q=80", categorySlugs: ["hlace"] },
     ],
@@ -47,7 +47,7 @@ const HERO: Record<string, {
     sub: "Udobno, veselo in vzdržljivo — za vsak dan.",
     cta: "Nakupuj otroške kose",
     features: [
-      { label: "Jakne", sub: "Za igro in šolo", img: "https://images.unsplash.com/photo-1604671368394-2240d0b1bb6c?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["jakne"] },
+      { label: "Jakne", sub: "Za igro in šolo", img: "https://img.modivo.cloud/product(0/e/5/8/0e58421fa6e7920c3514aec4efe9688aa6cd7b3e_01_0000303339739_RP.jpg,jpg)/didriksons-zimska-jakna-rodi-kids-jacket-2-504983-roza-0000303339739.jpg", categorySlugs: ["jakne"] },
       { label: "Majice", sub: "Pisane in udobne", img: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["majice", "t-shirt"] },
       { label: "Jopici", sub: "Toplo in kul", img: "https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=480&h=640&fit=crop&crop=top&q=80", categorySlugs: ["jopici"] },
     ],
@@ -59,11 +59,12 @@ const CAT_IMG: Record<string, string> = {
   "t-shirt": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop&crop=center&q=80",
   srajce:    "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=200&h=200&fit=crop&crop=center&q=80",
   obleke:    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=200&h=200&fit=crop&crop=center&q=80",
-  puloverji: "https://images.unsplash.com/photo-1576566588047-6b4486b4522?w=200&h=200&fit=crop&crop=center&q=80",
-  jopici:    "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=200&h=200&fit=crop&crop=center&q=80",
+  puloverji: "https://cdn.aboutstatic.com/file/images/6c1d7f60418538fb7d705576719e84e1.png?bg=F4F4F5&quality=75&trim=1&height=480&width=360",
+  jopici:    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR00JGtpiDdHkddhE4PljyAulDSfJGHrLs8gA&s",
   hlace:     "https://images.unsplash.com/photo-1542219550-37153d387c27?w=200&h=200&fit=crop&crop=center&q=80",
   jakne:     "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=200&h=200&fit=crop&crop=center&q=80",
   kape:      "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=200&h=200&fit=crop&crop=center&q=80",
+  "pi-ama":  "https://cdn.aboutstatic.com/file/images/8dc49ac7b9d7af4dc0155a1cdc201e40.jpg?brightness=0.96&quality=75&trim=1&height=1067&width=800",
 };
 
 export default async function HomePage({
