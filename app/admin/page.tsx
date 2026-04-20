@@ -62,19 +62,23 @@ function formatPrice(cents: number) {
   return `${(cents / 100).toFixed(2)} EUR`;
 }
 
+type ChartPoint = { label: string; value: number };
+type DailyAnalyticsPoint = { label: string; revCents: number; count: number };
+type AdminTab = { key: string; label: string };
+
 function BarChart({
   data,
   barColor = "#292524",
   labelEvery = 1,
 }: {
-  data: { label: string; value: number }[];
+  data: ChartPoint[];
   barColor?: string;
   labelEvery?: number;
 }) {
-  if (data.every((d) => d.value === 0)) {
+  if (data.every((point: ChartPoint) => point.value === 0)) {
     return <p className="py-6 text-center text-sm text-stone-400">Ni podatkov za ta period.</p>;
   }
-  const max = Math.max(...data.map((d) => d.value), 1);
+  const max = Math.max(...data.map((point: ChartPoint) => point.value), 1);
   const W = 600, H = 140, PB = 18;
   const chartH = H - PB;
   const barStep = W / Math.max(data.length, 1);
@@ -82,15 +86,15 @@ function BarChart({
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-hidden="true">
       <line x1={0} y1={chartH} x2={W} y2={chartH} stroke="#e7e5e4" />
-      {data.map((d, i) => {
-        const bh = d.value > 0 ? Math.max(2, (d.value / max) * chartH) : 0;
+      {data.map((point: ChartPoint, i: number) => {
+        const bh = point.value > 0 ? Math.max(2, (point.value / max) * chartH) : 0;
         const x = i * barStep + (barStep - barW) / 2;
         return (
           <g key={i}>
             <rect x={x} y={chartH - bh} width={barW} height={bh} fill={barColor} rx="1" />
             {i % labelEvery === 0 && (
               <text x={x + barW / 2} y={H - 3} textAnchor="middle" fontSize="8" fill="#a8a29e">
-                {d.label}
+                {point.label}
               </text>
             )}
           </g>
@@ -581,7 +585,7 @@ export default async function AdminPage({
     });
   }
 
-  const analyticsDaily: { label: string; revCents: number; count: number }[] = [];
+  const analyticsDaily: DailyAnalyticsPoint[] = [];
   if (section === "analitika") {
     for (let i = 29; i >= 0; i--) {
       const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
@@ -594,12 +598,12 @@ export default async function AdminPage({
     for (const o of analyticsOrders) {
       if (o.status !== "CANCELLED") {
         const dateStr = o.createdAt.toLocaleDateString("sl-SI", { day: "2-digit", month: "2-digit" });
-        const day = analyticsDaily.find((d) => d.label === dateStr);
+        const day = analyticsDaily.find((entry: DailyAnalyticsPoint) => entry.label === dateStr);
         if (day) { day.revCents += o.totalCents; day.count++; }
       }
     }
   }
-  const analyticsNonCancelled = analyticsOrders.filter((o) => o.status !== "CANCELLED");
+  const analyticsNonCancelled = analyticsOrders.filter((order: AnalyticsOrder) => order.status !== "CANCELLED");
   const analyticsRevTotal = analyticsDaily.reduce(
     (sum: number, day: (typeof analyticsDaily)[number]) => sum + day.revCents,
     0
@@ -621,10 +625,14 @@ export default async function AdminPage({
         sales[item.productName] = (sales[item.productName] || 0) + item.quantity;
       }
     }
-    analyticsTopProducts.push(...Object.entries(sales).sort(([, a], [, b]) => b - a).slice(0, 5));
+    analyticsTopProducts.push(
+      ...Object.entries(sales)
+        .sort(([, left]: [string, number], [, right]: [string, number]) => right - left)
+        .slice(0, 5)
+    );
   }
 
-  const tabs = [
+  const tabs: AdminTab[] = [
     { key: "products", label: "Izdelki" },
     { key: "orders", label: "Naročila" },
     { key: "creators", label: "Kreatorji" },
@@ -647,17 +655,17 @@ export default async function AdminPage({
 
         {/* Tabs */}
         <div className="flex gap-1 border-b border-stone-200">
-          {tabs.map((t) => (
+          {tabs.map((tab: AdminTab) => (
             <a
-              key={t.key}
-              href={`/admin?section=${t.key}`}
+              key={tab.key}
+              href={`/admin?section=${tab.key}`}
               className={`px-5 py-2.5 text-xs tracking-widest uppercase transition-colors ${
-                section === t.key
+                section === tab.key
                   ? "border-b-2 border-stone-900 text-stone-900 font-medium"
                   : "text-stone-400 hover:text-stone-700"
               }`}
             >
-              {t.label}
+              {tab.label}
             </a>
           ))}
         </div>
@@ -1022,8 +1030,8 @@ export default async function AdminPage({
                   <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">Kategorija</label>
                   <select name="categoryId" className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600 min-w-[160px]">
                     <option value="all">Vse kategorije</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                    {categories.map((category: TaxonomyItem) => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
                     ))}
                   </select>
                 </div>
@@ -1063,26 +1071,26 @@ export default async function AdminPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100">
-                    {products.map((p) => {
-                      const origCents = p.compareAtPriceCents ?? p.priceCents;
-                      const currentDiscount = p.compareAtPriceCents
-                        ? Math.round((1 - p.priceCents / p.compareAtPriceCents) * 100)
+                    {products.map((product: ProductRow) => {
+                      const origCents = product.compareAtPriceCents ?? product.priceCents;
+                      const currentDiscount = product.compareAtPriceCents
+                        ? Math.round((1 - product.priceCents / product.compareAtPriceCents) * 100)
                         : 0;
                       return (
-                        <tr key={p.id} className="hover:bg-stone-50/50">
+                        <tr key={product.id} className="hover:bg-stone-50/50">
                           <td className="py-3 pr-4">
                             <div className="flex items-center gap-3">
-                              {p.imageUrl && (
+                              {product.imageUrl && (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={p.imageUrl} alt={p.name} className="h-9 w-9 rounded border border-stone-100 object-cover shrink-0" />
+                                <img src={product.imageUrl} alt={product.name} className="h-9 w-9 rounded border border-stone-100 object-cover shrink-0" />
                               )}
-                              <span className="text-stone-800 font-medium">{p.name}</span>
+                              <span className="text-stone-800 font-medium">{product.name}</span>
                             </div>
                           </td>
                           <td className="py-3 pr-4 text-stone-500">{formatPrice(origCents)}</td>
                           <td className="py-3 pr-4">
-                            <span className={p.compareAtPriceCents ? "text-red-600 font-medium" : "text-stone-700"}>
-                              {formatPrice(p.priceCents)}
+                            <span className={product.compareAtPriceCents ? "text-red-600 font-medium" : "text-stone-700"}>
+                              {formatPrice(product.priceCents)}
                             </span>
                           </td>
                           <td className="py-3 pr-4">
@@ -1097,7 +1105,7 @@ export default async function AdminPage({
                           <td className="py-3">
                             <div className="flex items-center gap-2">
                               <form action={setProductDiscount} className="flex items-center gap-2">
-                                <input type="hidden" name="id" value={p.id} />
+                                <input type="hidden" name="id" value={product.id} />
                                 <input type="number" name="discountPercent" min={0} max={80}
                                   defaultValue={currentDiscount}
                                   className="border border-stone-300 px-2 py-1 text-xs w-16 outline-none focus:border-stone-600" />
@@ -1108,7 +1116,7 @@ export default async function AdminPage({
                               </form>
                               {currentDiscount > 0 && (
                                 <form action={setProductDiscount}>
-                                  <input type="hidden" name="id" value={p.id} />
+                                  <input type="hidden" name="id" value={product.id} />
                                   <input type="hidden" name="discountPercent" value="0" />
                                   <button type="submit" className="text-xs text-red-500 hover:text-red-700 tracking-widest uppercase">
                                     Odstrani
@@ -1151,7 +1159,7 @@ export default async function AdminPage({
               <h2 className="mb-1 text-xs tracking-widest uppercase text-stone-400">Dnevni promet — zadnjih 30 dni</h2>
               <p className="mb-4 text-xs text-stone-400">Brez preklicanih naročil</p>
               <BarChart
-                data={analyticsDaily.map((d) => ({ label: d.label, value: d.revCents }))}
+                data={analyticsDaily.map((day: DailyAnalyticsPoint) => ({ label: day.label, value: day.revCents }))}
                 labelEvery={5}
               />
             </div>
@@ -1160,7 +1168,7 @@ export default async function AdminPage({
             <div className="rounded border border-stone-200 bg-white p-6">
               <h2 className="mb-4 text-xs tracking-widest uppercase text-stone-400">Dnevno število naročil — zadnjih 30 dni</h2>
               <BarChart
-                data={analyticsDaily.map((d) => ({ label: d.label, value: d.count }))}
+                data={analyticsDaily.map((day: DailyAnalyticsPoint) => ({ label: day.label, value: day.count }))}
                 labelEvery={5}
                 barColor="#44403c"
               />
@@ -1203,7 +1211,7 @@ export default async function AdminPage({
               <div className="rounded border border-stone-200 bg-white p-6">
                 <h2 className="mb-4 text-xs tracking-widest uppercase text-stone-400">Najboljši izdelki — zadnjih 30 dni</h2>
                 <div className="space-y-3">
-                  {analyticsTopProducts.map(([name, qty], i) => {
+                  {analyticsTopProducts.map(([name, qty]: [string, number], i: number) => {
                     const maxQty = analyticsTopProducts[0]?.[1] ?? 1;
                     return (
                       <div key={i} className="flex items-center gap-3">
