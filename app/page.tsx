@@ -55,16 +55,17 @@ const HERO: Record<string, {
 };
 
 const CAT_IMG: Record<string, string> = {
-  majice:    "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200&h=200&fit=crop&crop=center&q=80",
-  "t-shirt": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop&crop=center&q=80",
-  srajce:    "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=200&h=200&fit=crop&crop=center&q=80",
-  obleke:    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=200&h=200&fit=crop&crop=center&q=80",
-  puloverji: "https://cdn.aboutstatic.com/file/images/6c1d7f60418538fb7d705576719e84e1.png?bg=F4F4F5&quality=75&trim=1&height=480&width=360",
-  jopici:    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR00JGtpiDdHkddhE4PljyAulDSfJGHrLs8gA&s",
-  hlace:     "https://images.unsplash.com/photo-1542219550-37153d387c27?w=200&h=200&fit=crop&crop=center&q=80",
-  jakne:     "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=200&h=200&fit=crop&crop=center&q=80",
-  kape:      "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=200&h=200&fit=crop&crop=center&q=80",
-  "pi-ama":  "https://cdn.aboutstatic.com/file/images/8dc49ac7b9d7af4dc0155a1cdc201e40.jpg?brightness=0.96&quality=75&trim=1&height=1067&width=800",
+  majice:    "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&h=800&fit=crop&crop=center&q=80",
+  "t-shirt": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=800&fit=crop&crop=center&q=80",
+  srajce:    "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&h=800&fit=crop&crop=center&q=80",
+  obleke:    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=800&fit=crop&crop=center&q=80",
+  puloverji: "https://images.unsplash.com/photo-1516826957135-700dedea698c?w=600&h=800&fit=crop&crop=center&q=80",
+  jopici:    "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&h=800&fit=crop&crop=center&q=80",
+  hlace:     "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&h=800&fit=crop&crop=center&q=80",
+  jakne:     "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600&h=800&fit=crop&crop=center&q=80",
+  kape:      "https://images.unsplash.com/photo-1576871337622-98d48d1cf531?w=600&h=800&fit=crop&crop=center&q=80",
+  "pi-ame":  "https://images.unsplash.com/photo-1586237180099-60c4a3f7d1f3?w=600&h=800&fit=crop&crop=center&q=80",
+  pizame:    "https://images.unsplash.com/photo-1586237180099-60c4a3f7d1f3?w=600&h=800&fit=crop&crop=center&q=80",
 };
 
 export default async function HomePage({
@@ -390,16 +391,25 @@ export default async function HomePage({
               <div className="w-8 h-px bg-stone-900" />
               <h2 className="text-xs tracking-[0.4em] uppercase text-stone-500">Kategorije</h2>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {categories.map((cat: CategoryItem2) => (
                 <Link
                   key={cat.id}
                   href={`/products?categoryId=${cat.id}`}
-                  className="group relative overflow-hidden border border-stone-200 p-3 text-center hover:border-stone-900 transition-all duration-300"
+                  className="group relative overflow-hidden bg-stone-100"
+                  style={{ aspectRatio: "3/4" }}
                 >
-                  <div className="absolute inset-0 bg-stone-900 scale-y-0 group-hover:scale-y-100 origin-bottom transition-transform duration-300" />
-                  <p className="relative text-xs font-medium text-stone-700 group-hover:text-white transition-colors duration-300">{cat.name}</p>
-                  <p className="relative mt-0.5 text-xs text-stone-400 group-hover:text-stone-300 transition-colors duration-300">{cat._count.products}</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={CAT_IMG[cat.slug] ?? `https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&h=800&fit=crop&crop=center&q=80`}
+                    alt={cat.name}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-sm font-medium tracking-wide text-white">{cat.name}</p>
+                    <p className="mt-0.5 text-xs text-white/60">{cat._count.products} kosov</p>
+                  </div>
                 </Link>
               ))}
             </div>

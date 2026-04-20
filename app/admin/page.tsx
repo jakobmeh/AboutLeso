@@ -12,6 +12,8 @@ import {
   deleteProduct,
   toggleProductActive,
   updateProduct,
+  setProductDiscount,
+  setBulkDiscount,
 } from "@/app/actions/admin-products";
 import {
   assignCreatorCode,
@@ -58,6 +60,44 @@ function one(value: string | string[] | undefined) {
 
 function formatPrice(cents: number) {
   return `${(cents / 100).toFixed(2)} EUR`;
+}
+
+function BarChart({
+  data,
+  barColor = "#292524",
+  labelEvery = 1,
+}: {
+  data: { label: string; value: number }[];
+  barColor?: string;
+  labelEvery?: number;
+}) {
+  if (data.every((d) => d.value === 0)) {
+    return <p className="py-6 text-center text-sm text-stone-400">Ni podatkov za ta period.</p>;
+  }
+  const max = Math.max(...data.map((d) => d.value), 1);
+  const W = 600, H = 140, PB = 18;
+  const chartH = H - PB;
+  const barStep = W / Math.max(data.length, 1);
+  const barW = Math.max(2, barStep - 3);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-hidden="true">
+      <line x1={0} y1={chartH} x2={W} y2={chartH} stroke="#e7e5e4" />
+      {data.map((d, i) => {
+        const bh = d.value > 0 ? Math.max(2, (d.value / max) * chartH) : 0;
+        const x = i * barStep + (barStep - barW) / 2;
+        return (
+          <g key={i}>
+            <rect x={x} y={chartH - bh} width={barW} height={bh} fill={barColor} rx="1" />
+            {i % labelEvery === 0 && (
+              <text x={x + barW / 2} y={H - 3} textAnchor="middle" fontSize="8" fill="#a8a29e">
+                {d.label}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
 }
 
 function TaxonomySection({
@@ -519,10 +559,70 @@ export default async function AdminPage({
     });
   }
 
+  // Analytics data — fetched only when on that tab
+  type AnalyticsOrder = {
+    createdAt: Date;
+    totalCents: number;
+    status: string;
+    items: { productName: string; quantity: number }[];
+  };
+  let analyticsOrders: AnalyticsOrder[] = [];
+  if (section === "analitika") {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    analyticsOrders = await prisma.order.findMany({
+      where: { createdAt: { gte: cutoff } },
+      orderBy: { createdAt: "asc" },
+      select: {
+        createdAt: true,
+        totalCents: true,
+        status: true,
+        items: { select: { productName: true, quantity: true } },
+      },
+    });
+  }
+
+  const analyticsDaily: { label: string; revCents: number; count: number }[] = [];
+  if (section === "analitika") {
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      analyticsDaily.push({
+        label: d.toLocaleDateString("sl-SI", { day: "2-digit", month: "2-digit" }),
+        revCents: 0,
+        count: 0,
+      });
+    }
+    for (const o of analyticsOrders) {
+      if (o.status !== "CANCELLED") {
+        const dateStr = o.createdAt.toLocaleDateString("sl-SI", { day: "2-digit", month: "2-digit" });
+        const day = analyticsDaily.find((d) => d.label === dateStr);
+        if (day) { day.revCents += o.totalCents; day.count++; }
+      }
+    }
+  }
+  const analyticsNonCancelled = analyticsOrders.filter((o) => o.status !== "CANCELLED");
+  const analyticsRevTotal = analyticsDaily.reduce((s, d) => s + d.revCents, 0);
+  const analyticsOrdersTotal = analyticsNonCancelled.length;
+  const analyticsAvgOrder = analyticsOrdersTotal > 0 ? Math.round(analyticsRevTotal / analyticsOrdersTotal) : 0;
+  const analyticsStatusCounts = section === "analitika"
+    ? allOrders.reduce((acc, o) => { acc[o.status] = (acc[o.status] || 0) + 1; return acc; }, {} as Record<string, number>)
+    : {} as Record<string, number>;
+  const analyticsTopProducts: [string, number][] = [];
+  if (section === "analitika") {
+    const sales: Record<string, number> = {};
+    for (const o of analyticsNonCancelled) {
+      for (const item of o.items) {
+        sales[item.productName] = (sales[item.productName] || 0) + item.quantity;
+      }
+    }
+    analyticsTopProducts.push(...Object.entries(sales).sort(([, a], [, b]) => b - a).slice(0, 5));
+  }
+
   const tabs = [
     { key: "products", label: "Izdelki" },
     { key: "orders", label: "Naročila" },
     { key: "creators", label: "Kreatorji" },
+    { key: "popusti", label: "Popusti" },
+    { key: "analitika", label: "Analitika" },
     { key: "taxonomy", label: "Taksonomija" },
   ];
 
@@ -903,6 +1003,215 @@ export default async function AdminPage({
             />
           </>
         )}
+        {/* Discounts section */}
+        {section === "popusti" && (
+          <div className="space-y-6">
+            {/* Bulk discount */}
+            <section className="rounded border border-stone-200 bg-white p-6 space-y-5">
+              <h2 className="text-lg font-medium text-stone-800">Skupinski popust</h2>
+              <p className="text-xs text-stone-400">Nastavi popust na vse izdelke ali samo na določeno kategorijo. Originalna cena se shrani in jo lahko kadarkoli povrneš.</p>
+              <form action={setBulkDiscount} className="flex flex-wrap gap-3 items-end">
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">Kategorija</label>
+                  <select name="categoryId" className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600 min-w-[160px]">
+                    <option value="all">Vse kategorije</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs tracking-widest uppercase text-stone-400 mb-1">Popust (%)</label>
+                  <input type="number" name="discountPercent" min={0} max={80} defaultValue={10}
+                    className="border border-stone-300 px-3 py-2 text-sm text-stone-800 outline-none focus:border-stone-600 w-24" />
+                </div>
+                <button type="submit" className="bg-stone-800 px-4 py-2 text-xs tracking-widest uppercase text-white hover:bg-stone-900">
+                  Nastavi popust
+                </button>
+              </form>
+              <form action={setBulkDiscount} className="flex flex-wrap gap-3 items-end border-t border-stone-100 pt-4">
+                <input type="hidden" name="categoryId" value="all" />
+                <input type="hidden" name="discountPercent" value="0" />
+                <div>
+                  <p className="text-xs text-stone-500 mb-2">Odstrani vse popuste (povrne originalne cene)</p>
+                  <button type="submit" className="border border-red-300 text-red-600 px-4 py-2 text-xs tracking-widest uppercase hover:bg-red-50">
+                    Odstrani vse popuste
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            {/* Per-product discounts */}
+            <section className="rounded border border-stone-200 bg-white p-6">
+              <h2 className="text-lg font-medium text-stone-800 mb-5">Popusti po izdelkih</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-stone-200 text-xs tracking-widest uppercase text-stone-400">
+                      <th className="py-2 pr-4 font-medium">Izdelek</th>
+                      <th className="py-2 pr-4 font-medium">Orig. cena</th>
+                      <th className="py-2 pr-4 font-medium">Trenutna cena</th>
+                      <th className="py-2 pr-4 font-medium">Popust</th>
+                      <th className="py-2 font-medium">Nastavi popust</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {products.map((p) => {
+                      const origCents = p.compareAtPriceCents ?? p.priceCents;
+                      const currentDiscount = p.compareAtPriceCents
+                        ? Math.round((1 - p.priceCents / p.compareAtPriceCents) * 100)
+                        : 0;
+                      return (
+                        <tr key={p.id} className="hover:bg-stone-50/50">
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-3">
+                              {p.imageUrl && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={p.imageUrl} alt={p.name} className="h-9 w-9 rounded border border-stone-100 object-cover shrink-0" />
+                              )}
+                              <span className="text-stone-800 font-medium">{p.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4 text-stone-500">{formatPrice(origCents)}</td>
+                          <td className="py-3 pr-4">
+                            <span className={p.compareAtPriceCents ? "text-red-600 font-medium" : "text-stone-700"}>
+                              {formatPrice(p.priceCents)}
+                            </span>
+                          </td>
+                          <td className="py-3 pr-4">
+                            {currentDiscount > 0 ? (
+                              <span className="inline-block bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded">
+                                -{currentDiscount}%
+                              </span>
+                            ) : (
+                              <span className="text-stone-300 text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-2">
+                              <form action={setProductDiscount} className="flex items-center gap-2">
+                                <input type="hidden" name="id" value={p.id} />
+                                <input type="number" name="discountPercent" min={0} max={80}
+                                  defaultValue={currentDiscount}
+                                  className="border border-stone-300 px-2 py-1 text-xs w-16 outline-none focus:border-stone-600" />
+                                <span className="text-xs text-stone-400">%</span>
+                                <button type="submit" className="bg-stone-800 text-white px-3 py-1 text-xs tracking-widest uppercase hover:bg-stone-900">
+                                  OK
+                                </button>
+                              </form>
+                              {currentDiscount > 0 && (
+                                <form action={setProductDiscount}>
+                                  <input type="hidden" name="id" value={p.id} />
+                                  <input type="hidden" name="discountPercent" value="0" />
+                                  <button type="submit" className="text-xs text-red-500 hover:text-red-700 tracking-widest uppercase">
+                                    Odstrani
+                                  </button>
+                                </form>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* Analytics section */}
+        {section === "analitika" && (
+          <div className="space-y-6">
+            {/* Summary stats */}
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              <div className="rounded border border-stone-200 bg-white p-5">
+                <p className="text-xs tracking-widest uppercase text-stone-400">Promet (30 dni)</p>
+                <p className="mt-2 text-2xl font-light text-stone-900">{formatPrice(analyticsRevTotal)}</p>
+              </div>
+              <div className="rounded border border-stone-200 bg-white p-5">
+                <p className="text-xs tracking-widest uppercase text-stone-400">Naročila (30 dni)</p>
+                <p className="mt-2 text-2xl font-light text-stone-900">{analyticsOrdersTotal}</p>
+              </div>
+              <div className="rounded border border-stone-200 bg-white p-5 col-span-2 md:col-span-1">
+                <p className="text-xs tracking-widest uppercase text-stone-400">Povprečno naročilo</p>
+                <p className="mt-2 text-2xl font-light text-stone-900">{formatPrice(analyticsAvgOrder)}</p>
+              </div>
+            </div>
+
+            {/* Daily revenue chart */}
+            <div className="rounded border border-stone-200 bg-white p-6">
+              <h2 className="mb-1 text-xs tracking-widest uppercase text-stone-400">Dnevni promet — zadnjih 30 dni</h2>
+              <p className="mb-4 text-xs text-stone-400">Brez preklicanih naročil</p>
+              <BarChart
+                data={analyticsDaily.map((d) => ({ label: d.label, value: d.revCents }))}
+                labelEvery={5}
+              />
+            </div>
+
+            {/* Daily order count chart */}
+            <div className="rounded border border-stone-200 bg-white p-6">
+              <h2 className="mb-4 text-xs tracking-widest uppercase text-stone-400">Dnevno število naročil — zadnjih 30 dni</h2>
+              <BarChart
+                data={analyticsDaily.map((d) => ({ label: d.label, value: d.count }))}
+                labelEvery={5}
+                barColor="#44403c"
+              />
+            </div>
+
+            {/* Status distribution */}
+            <div className="rounded border border-stone-200 bg-white p-6">
+              <h2 className="mb-4 text-xs tracking-widest uppercase text-stone-400">Naročila po statusu (zadnjih 100)</h2>
+              <div className="space-y-3">
+                {(["PENDING", "CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"] as const).map((status) => {
+                  const count = analyticsStatusCounts[status] ?? 0;
+                  const total = Object.values(analyticsStatusCounts).reduce((a, b) => a + b, 0);
+                  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                  const labels: Record<string, string> = {
+                    PENDING: "Čakanje", CONFIRMED: "Potrjeno", PREPARING: "V pripravi",
+                    SHIPPED: "V dostavi", DELIVERED: "Dostavljeno", CANCELLED: "Preklicano",
+                  };
+                  const colors: Record<string, string> = {
+                    PENDING: "bg-amber-400", CONFIRMED: "bg-blue-400", PREPARING: "bg-purple-400",
+                    SHIPPED: "bg-cyan-400", DELIVERED: "bg-green-500", CANCELLED: "bg-red-400",
+                  };
+                  return (
+                    <div key={status} className="flex items-center gap-3">
+                      <span className="w-24 shrink-0 text-xs text-stone-500">{labels[status]}</span>
+                      <div className="h-4 flex-1 overflow-hidden rounded-full bg-stone-100">
+                        <div className={`h-full rounded-full ${colors[status]}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="w-16 text-right text-xs text-stone-500">{count} ({pct}%)</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Top products */}
+            {analyticsTopProducts.length > 0 && (
+              <div className="rounded border border-stone-200 bg-white p-6">
+                <h2 className="mb-4 text-xs tracking-widest uppercase text-stone-400">Najboljši izdelki — zadnjih 30 dni</h2>
+                <div className="space-y-3">
+                  {analyticsTopProducts.map(([name, qty], i) => {
+                    const maxQty = analyticsTopProducts[0]?.[1] ?? 1;
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="w-5 shrink-0 text-xs font-medium text-stone-400">{i + 1}.</span>
+                        <span className="w-40 shrink-0 truncate text-xs text-stone-700">{name}</span>
+                        <div className="h-3 flex-1 overflow-hidden rounded-full bg-stone-100">
+                          <div className="h-full rounded-full bg-stone-800" style={{ width: `${Math.round((qty / maxQty) * 100)}%` }} />
+                        </div>
+                        <span className="w-12 text-right text-xs text-stone-500">{qty} kos</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
     </div>
   );

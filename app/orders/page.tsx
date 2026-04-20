@@ -90,114 +90,72 @@ export default async function OrdersPage({
           </div>
         ) : (
           orders.map((order: Order) => (
-            <article key={order.id} className="border border-stone-200">
-              {/* Order header */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-100 bg-stone-50 px-6 py-4">
-                <div className="space-y-1">
-                  <p className="text-xs tracking-widest uppercase text-stone-400">Naročilo</p>
-                  <p className="font-mono text-xs text-stone-600">{order.id.slice(0, 16)}…</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs tracking-widest uppercase text-stone-400">Datum</p>
-                  <p className="text-sm text-stone-700">{formatDate(order.createdAt)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs tracking-widest uppercase text-stone-400">Status</p>
-                  <span className={`inline-block border px-2 py-0.5 text-xs tracking-widest uppercase ${statusColor[order.status] ?? "bg-stone-50 text-stone-600 border-stone-200"}`}>
-                    {statusLabel[order.status] ?? order.status}
-                  </span>
-                  {order.trackingNumber && (
-                    <a
-                      href={`https://tracking.dpd.de/status/sl_SI/parcel/${order.trackingNumber}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 flex items-center gap-1.5 text-xs text-stone-600 hover:text-stone-900 underline underline-offset-2 transition-colors"
-                    >
-                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      </svg>
-                      Sledi pošiljki DPD
-                    </a>
-                  )}
-                </div>
-                <div className="space-y-1 text-right">
-                  <p className="text-xs tracking-widest uppercase text-stone-400">Skupaj</p>
-                  <p className="text-lg font-light text-stone-900">{formatPrice(order.totalCents)}</p>
-                  <div className="flex gap-2 justify-end flex-wrap">
-                    <a
-                      href={`/api/orders/${order.id}/invoice`}
-                      className="inline-flex border border-stone-300 px-3 py-1 text-[10px] tracking-widest uppercase text-stone-600 hover:border-stone-700 hover:text-stone-900 transition-colors"
-                    >
-                      Prenesi PDF
-                    </a>
-                    {order.status === "PENDING" && (
-                      <CancelOrderButton orderId={order.id} />
-                    )}
-                  </div>
+            <article key={order.id} className="border border-stone-200 hover:border-stone-300 transition-colors">
+
+              {/* Compact header row */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-stone-100 bg-stone-50/70 px-5 py-3">
+                <span className="font-mono text-xs text-stone-400">{order.id.slice(0, 14)}…</span>
+                <span className="text-xs text-stone-500">{formatDate(order.createdAt)}</span>
+                <span className={`border px-2 py-0.5 text-[10px] tracking-widest uppercase ${statusColor[order.status] ?? "bg-stone-50 text-stone-600 border-stone-200"}`}>
+                  {statusLabel[order.status] ?? order.status}
+                </span>
+                {order.trackingNumber && (
+                  <a
+                    href={`https://tracking.dpd.de/status/sl_SI/parcel/${order.trackingNumber}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-stone-500 underline underline-offset-2 hover:text-stone-900 transition-colors"
+                  >
+                    Sledi DPD →
+                  </a>
+                )}
+                <div className="ml-auto flex items-center gap-3">
+                  <span className="text-sm font-medium text-stone-900">{formatPrice(order.totalCents)}</span>
+                  <a
+                    href={`/api/orders/${order.id}/invoice`}
+                    className="border border-stone-200 px-2.5 py-1 text-[10px] tracking-widest uppercase text-stone-500 hover:border-stone-600 hover:text-stone-800 transition-colors"
+                  >
+                    PDF
+                  </a>
+                  {order.status === "PENDING" && <CancelOrderButton orderId={order.id} />}
                 </div>
               </div>
 
-              {/* Order items */}
-              <div className="divide-y divide-stone-100 px-6">
+              {/* Items — compact list */}
+              <div className="px-5 py-3 space-y-1.5">
                 {order.items.map((item: OrderItem) => (
-                  <div key={item.id} className="flex items-center justify-between py-4">
-                    <div>
-                      <p className="text-sm text-stone-800">{item.productName}</p>
+                  <div key={item.id} className="flex items-baseline justify-between gap-4">
+                    <span className="text-sm text-stone-800">
+                      {item.quantity}× {item.productName}
                       {item.productSize && (
-                        <p className="text-xs text-stone-500">Velikost: {item.productSize}</p>
+                        <span className="ml-1.5 text-xs text-stone-400">({item.productSize})</span>
                       )}
-                      <p className="text-xs text-stone-400">{item.quantity} × {formatPrice(item.unitPriceCents)}</p>
-                    </div>
-                    <p className="text-sm font-medium text-stone-700">{formatPrice(item.lineTotalCents)}</p>
+                    </span>
+                    <span className="shrink-0 text-sm text-stone-600">{formatPrice(item.lineTotalCents)}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t border-stone-100 bg-stone-50 px-6 py-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1 text-sm">
-                    <p className="text-xs tracking-widest uppercase text-stone-500">Naslov dostave</p>
-                    {order.shippingFullName ? (
-                      <div className="text-stone-700">
-                        {order.shippingLabel && <p>{order.shippingLabel}</p>}
-                        <p>{order.shippingFullName}</p>
-                        {order.shippingLine1 && <p>{order.shippingLine1}</p>}
-                        {order.shippingLine2 && <p>{order.shippingLine2}</p>}
-                        {(order.shippingPostalCode || order.shippingCity) && (
-                          <p>
-                            {order.shippingPostalCode ?? ""} {order.shippingCity ?? ""}
-                          </p>
-                        )}
-                        {order.shippingCountry && <p>{order.shippingCountry}</p>}
-                        {order.shippingPhone && <p className="text-xs text-stone-500">Tel: {order.shippingPhone}</p>}
-                      </div>
-                    ) : (
-                      <p className="text-stone-500">Naslov ni shranjen.</p>
-                    )}
-                  </div>
-
-                  <div className="ml-auto w-full max-w-xs space-y-1 text-sm">
-                    <div className="flex items-center justify-between text-stone-600">
-                      <span>Vmesni znesek</span>
-                      <span>{formatPrice(order.subtotalCents)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-stone-600">
-                      <span>Popust</span>
-                      <span>-{formatPrice(order.discountCents)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-stone-600">
-                      <span>Dostava</span>
-                      <span>
-                        {order.shippingCents === 0 ? "Brezplacno" : formatPrice(order.shippingCents)}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between border-t border-stone-200 pt-2 font-medium text-stone-900">
-                      <span>Skupaj</span>
-                      <span>{formatPrice(order.totalCents)}</span>
-                    </div>
-                  </div>
+              {/* Footer — address + price summary in one slim row */}
+              <div className="flex flex-wrap items-end justify-between gap-4 border-t border-stone-100 bg-stone-50/50 px-5 py-3">
+                <div className="text-xs text-stone-400 leading-relaxed">
+                  {order.shippingFullName ? (
+                    <span>
+                      {[order.shippingFullName, order.shippingLine1, [order.shippingPostalCode, order.shippingCity].filter(Boolean).join(" "), order.shippingCountry]
+                        .filter(Boolean).join(" · ")}
+                    </span>
+                  ) : (
+                    <span>Naslov ni shranjen.</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-5 text-xs text-stone-500">
+                  {order.discountCents > 0 && (
+                    <span>Popust: <span className="text-stone-700">-{formatPrice(order.discountCents)}</span></span>
+                  )}
+                  <span>Dostava: <span className="text-stone-700">{order.shippingCents === 0 ? "Brezplačno" : formatPrice(order.shippingCents)}</span></span>
+                  <span className="font-medium text-stone-900">Skupaj: {formatPrice(order.totalCents)}</span>
                 </div>
               </div>
+
             </article>
           ))
         )}

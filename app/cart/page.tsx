@@ -222,7 +222,7 @@ export default async function CartPage({
               </div>
             </div>
 
-            <div className="w-full shrink-0 lg:w-[420px] space-y-4">
+            <div className="w-full shrink-0 lg:w-[400px] space-y-4">
               <CartCheckout
                 subtotalCents={subtotalCents}
                 addresses={addresses}
@@ -232,125 +232,79 @@ export default async function CartPage({
                 addressSuccess={addressSuccess}
               />
 
+              {/* Add new address — collapsed by default when addresses exist */}
+              <details className="border border-stone-200 group" {...(addresses.length === 0 ? { open: true } : {})}>
+                <summary className="flex cursor-pointer select-none items-center justify-between px-5 py-3 text-xs tracking-widest uppercase text-stone-500 hover:text-stone-800 transition-colors list-none">
+                  <span>+ Dodaj nov naslov</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                    className="w-3.5 h-3.5 transition-transform group-open:rotate-180">
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </summary>
+                <div className="border-t border-stone-100 px-5 pb-5 pt-4">
+                  <form action={createAddress} className="grid grid-cols-2 gap-2">
+                    <input type="text" name="label" placeholder="Oznaka (npr. Dom)"
+                      className="col-span-2 border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700" />
+                    <input type="text" name="fullName" required placeholder="Ime in priimek"
+                      className="col-span-2 border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700" />
+                    <input type="text" name="line1" required placeholder="Ulica in hišna številka"
+                      className="col-span-2 border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700" />
+                    <input type="text" name="postalCode" required placeholder="Poštna številka"
+                      className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700" />
+                    <input type="text" name="city" required placeholder="Mesto"
+                      className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700" />
+                    <input type="text" name="country" required defaultValue="Slovenija" placeholder="Država"
+                      className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700" />
+                    <input type="text" name="phone" placeholder="Telefon (neobvezno)"
+                      className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700" />
+                    <label className="col-span-2 flex items-center gap-2 text-xs text-stone-600">
+                      <input type="checkbox" name="setDefault" />
+                      Nastavi kot privzet
+                    </label>
+                    <button type="submit"
+                      className="col-span-2 border border-stone-800 py-2 text-xs tracking-widest uppercase text-stone-800 hover:bg-stone-900 hover:text-white transition-colors">
+                      Shrani naslov
+                    </button>
+                  </form>
+                </div>
+              </details>
+
+              {/* Existing addresses — compact */}
               {addresses.length > 0 && (
-                <div className="border border-stone-200 p-6">
-                  <p className="mb-2 text-xs tracking-widest uppercase text-stone-400">
-                    Upravljanje naslovov
-                  </p>
-                  <div className="space-y-2">
-                    {addresses.map((address: Address) => (
-                      <div
-                        key={`manage-${address.id}`}
-                        className="flex items-center justify-between rounded border border-stone-100 px-3 py-2"
-                      >
-                        <span className="text-xs text-stone-600">
-                          {address.label || `${address.city}, ${address.line1}`}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {!address.isDefault && (
-                            <form action={setDefaultAddress}>
-                              <input type="hidden" name="id" value={address.id} />
-                              <button
-                                type="submit"
-                                className="text-xs uppercase tracking-widest text-stone-500 hover:text-stone-800"
-                              >
-                                Privzet
-                              </button>
-                            </form>
-                          )}
-                          <form action={deleteAddress}>
+                <div className="border border-stone-200 px-5 py-3 space-y-1">
+                  <p className="mb-2 text-xs tracking-widest uppercase text-stone-400">Shranjeni naslovi</p>
+                  {addresses.map((address: Address) => (
+                    <div key={`manage-${address.id}`} className="flex items-center justify-between py-1">
+                      <span className="text-xs text-stone-600 truncate mr-3">
+                        {address.label || `${address.city}, ${address.line1}`}
+                        {address.isDefault && <span className="ml-1.5 text-[10px] text-green-600 uppercase tracking-widest">privzet</span>}
+                      </span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {!address.isDefault && (
+                          <form action={setDefaultAddress}>
                             <input type="hidden" name="id" value={address.id} />
-                            <button
-                              type="submit"
-                              className="text-xs uppercase tracking-widest text-red-500 hover:text-red-700"
-                            >
-                              Izbrisi
+                            <button type="submit" className="text-[10px] uppercase tracking-widest text-stone-400 hover:text-stone-700">
+                              Privzet
                             </button>
                           </form>
-                        </div>
+                        )}
+                        <form action={deleteAddress}>
+                          <input type="hidden" name="id" value={address.id} />
+                          <button type="submit" className="text-[10px] uppercase tracking-widest text-red-400 hover:text-red-600">
+                            Izbriši
+                          </button>
+                        </form>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
-              <div className="border border-stone-200 p-6">
-                <p className="mb-2 text-xs tracking-widest uppercase text-stone-400">
-                  Dodaj nov naslov
-                </p>
-                <form action={createAddress} className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <input
-                    type="text"
-                    name="label"
-                    placeholder="Oznaka (npr. Dom)"
-                    className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700"
-                  />
-                  <input
-                    type="text"
-                    name="fullName"
-                    required
-                    placeholder="Ime in priimek"
-                    className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700"
-                  />
-                  <input
-                    type="text"
-                    name="line1"
-                    required
-                    placeholder="Ulica in hisna stevilka"
-                    className="md:col-span-2 border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700"
-                  />
-                  <input
-                    type="text"
-                    name="line2"
-                    placeholder="Stanovanje, nadstropje (neobvezno)"
-                    className="md:col-span-2 border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700"
-                  />
-                  <input
-                    type="text"
-                    name="postalCode"
-                    required
-                    placeholder="Postna stevilka"
-                    className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700"
-                  />
-                  <input
-                    type="text"
-                    name="city"
-                    required
-                    placeholder="Mesto"
-                    className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700"
-                  />
-                  <input
-                    type="text"
-                    name="country"
-                    required
-                    defaultValue="Slovenija"
-                    placeholder="Drzava"
-                    className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700"
-                  />
-                  <input
-                    type="text"
-                    name="phone"
-                    placeholder="Telefon (neobvezno)"
-                    className="border border-stone-300 px-3 py-2 text-sm outline-none focus:border-stone-700"
-                  />
-                  <label className="md:col-span-2 flex items-center gap-2 text-xs text-stone-600">
-                    <input type="checkbox" name="setDefault" />
-                    Nastavi kot privzet naslov
-                  </label>
-                  <button
-                    type="submit"
-                    className="md:col-span-2 border border-stone-800 py-2 text-xs tracking-widest uppercase text-stone-800 hover:bg-stone-900 hover:text-white transition-colors"
-                  >
-                    Dodaj naslov
-                  </button>
-                </form>
-              </div>
-
               <Link
                 href="/orders"
-                className="block w-full border border-stone-300 py-3 text-center text-xs tracking-widest uppercase text-stone-600 hover:border-stone-700 hover:text-stone-900 transition-colors"
+                className="block w-full border border-stone-200 py-2.5 text-center text-xs tracking-widest uppercase text-stone-400 hover:border-stone-600 hover:text-stone-700 transition-colors"
               >
-                Moja narocila
+                Moja naročila
               </Link>
             </div>
           </div>

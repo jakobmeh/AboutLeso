@@ -12,6 +12,40 @@ function formatDate(date: Date) {
   return new Intl.DateTimeFormat("sl-SI", { dateStyle: "medium" }).format(date);
 }
 
+function BarChart({
+  data,
+  barColor = "#292524",
+}: {
+  data: { label: string; value: number }[];
+  barColor?: string;
+}) {
+  if (data.every((d) => d.value === 0)) {
+    return <p className="py-6 text-center text-sm text-stone-400">Še ni podatkov.</p>;
+  }
+  const max = Math.max(...data.map((d) => d.value), 1);
+  const W = 500, H = 120, PB = 20;
+  const chartH = H - PB;
+  const barStep = W / Math.max(data.length, 1);
+  const barW = Math.max(8, barStep - 8);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-hidden="true">
+      <line x1={0} y1={chartH} x2={W} y2={chartH} stroke="#e7e5e4" />
+      {data.map((d, i) => {
+        const bh = d.value > 0 ? Math.max(2, (d.value / max) * chartH) : 0;
+        const x = i * barStep + (barStep - barW) / 2;
+        return (
+          <g key={i}>
+            <rect x={x} y={chartH - bh} width={barW} height={bh} fill={barColor} rx="1" />
+            <text x={x + barW / 2} y={H - 4} textAnchor="middle" fontSize="9" fill="#a8a29e">
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default async function CreatorPage() {
   const session = await requireRole([Role.CREATOR]);
 
@@ -41,6 +75,28 @@ export default async function CreatorPage() {
     (sum: number, o: OrderWithUser) => sum + (o.subtotalCents - o.discountCents),
     0
   );
+
+  // Monthly chart data — last 6 months
+  const monthlyData: { label: string; earningsCents: number; orderCount: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    monthlyData.push({
+      label: d.toLocaleDateString("sl-SI", { month: "short" }),
+      earningsCents: 0,
+      orderCount: 0,
+    });
+  }
+  for (const o of creatorCode.orders) {
+    const d = new Date(o.createdAt);
+    const label = new Date(d.getFullYear(), d.getMonth(), 1).toLocaleDateString("sl-SI", { month: "short" });
+    const month = monthlyData.find((m) => m.label === label);
+    if (month) {
+      month.earningsCents += o.commissionCents;
+      month.orderCount++;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -101,6 +157,24 @@ export default async function CreatorPage() {
           </div>
           <div className="ml-auto self-center print:hidden">
             <PrintButton />
+          </div>
+        </section>
+
+        {/* Monthly charts */}
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 print:hidden">
+          <div className="border border-stone-200 p-5">
+            <p className="text-xs tracking-widest uppercase text-stone-400 mb-4">Mesečni zaslužek</p>
+            <BarChart
+              data={monthlyData.map((m) => ({ label: m.label, value: m.earningsCents }))}
+              barColor="#15803d"
+            />
+          </div>
+          <div className="border border-stone-200 p-5">
+            <p className="text-xs tracking-widest uppercase text-stone-400 mb-4">Mesečno število naročil</p>
+            <BarChart
+              data={monthlyData.map((m) => ({ label: m.label, value: m.orderCount }))}
+              barColor="#292524"
+            />
           </div>
         </section>
 

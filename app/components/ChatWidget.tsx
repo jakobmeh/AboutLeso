@@ -86,16 +86,24 @@ export default function ChatWidget() {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {open && (
-        <div className="w-80 sm:w-96 bg-white border border-stone-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-          style={{ height: "480px" }}>
+        <div
+          className="w-80 sm:w-[360px] bg-white border border-stone-200 rounded-xl shadow-xl flex flex-col overflow-hidden"
+          style={{ height: "420px" }}
+        >
           {/* Header */}
-          <div className="bg-stone-900 px-4 py-3 flex items-center justify-between">
+          <div className="px-4 py-3 flex items-center justify-between border-b border-stone-100">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-white text-sm font-medium tracking-wide">LESO ASISTENT</span>
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-stone-800 text-xs font-medium tracking-widest uppercase">Leso Asistent</span>
             </div>
-            <button onClick={() => setOpen(false)} className="text-stone-400 hover:text-white transition-colors text-lg leading-none">
-              ×
+            <button
+              onClick={() => setOpen(false)}
+              className="text-stone-400 hover:text-stone-700 transition-colors p-1 rounded hover:bg-stone-100"
+              aria-label="Zapri"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
 
@@ -122,7 +130,7 @@ export default function ChatWidget() {
             <div className="px-4 pb-2 flex flex-wrap gap-1.5">
               {["Pokaži moške jakne", "Kakšna je dostava?", "Kje so ženska oblačila?"].map((s) => (
                 <button key={s} onClick={() => { setInput(s); setTimeout(() => inputRef.current?.focus(), 50); }}
-                  className="text-xs bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1 rounded-full transition-colors">
+                  className="text-xs bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1.5 rounded-full transition-colors">
                   {s}
                 </button>
               ))}
@@ -138,10 +146,10 @@ export default function ChatWidget() {
               onKeyDown={(e) => e.key === "Enter" && send()}
               placeholder="Vnesite sporočilo..."
               disabled={loading}
-              className="flex-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:border-stone-400 transition-colors placeholder:text-stone-400"
+              className="flex-1 text-sm bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 outline-none focus:border-stone-400 transition-colors placeholder:text-stone-400"
             />
             <button onClick={send} disabled={loading || !input.trim()}
-              className="bg-stone-900 text-white rounded-xl px-3 py-2 hover:bg-stone-700 disabled:opacity-40 transition-colors">
+              className="bg-stone-900 text-white rounded-lg px-3 py-2 hover:bg-stone-700 disabled:opacity-40 transition-colors">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
               </svg>
@@ -150,22 +158,18 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {/* Bubble button */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-14 h-14 bg-stone-900 hover:bg-stone-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-        aria-label="Odpri asistenta"
-      >
-        {open ? (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      {/* Bubble button — only shown when chat is closed */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-13 h-13 w-[52px] h-[52px] bg-stone-900 hover:bg-stone-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+          aria-label="Odpri asistenta"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
           </svg>
-        )}
-      </button>
+        </button>
+      )}
     </div>
   );
 }

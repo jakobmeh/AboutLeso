@@ -262,6 +262,84 @@ export async function updateProduct(formData: FormData) {
   revalidatePath("/admin");
 }
 
+export async function setProductDiscount(formData: FormData) {
+  await ensureAdmin();
+
+  const id = formData.get("id") as string;
+  const discountPercent = Math.round(Number(formData.get("discountPercent") ?? 0));
+
+  if (!id) throw new Error("Invalid id.");
+  if (discountPercent < 0 || discountPercent > 80) throw new Error("Invalid discount.");
+
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: { priceCents: true, compareAtPriceCents: true },
+  });
+  if (!product) throw new Error("Product not found.");
+
+  if (discountPercent === 0) {
+    await prisma.product.update({
+      where: { id },
+      data: {
+        priceCents: product.compareAtPriceCents ?? product.priceCents,
+        compareAtPriceCents: null,
+      },
+    });
+  } else {
+    const originalPrice = product.compareAtPriceCents ?? product.priceCents;
+    await prisma.product.update({
+      where: { id },
+      data: {
+        compareAtPriceCents: originalPrice,
+        priceCents: Math.max(Math.round(originalPrice * (1 - discountPercent / 100)), 1),
+      },
+    });
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/products");
+}
+
+export async function setBulkDiscount(formData: FormData) {
+  await ensureAdmin();
+
+  const categoryId = formData.get("categoryId") as string;
+  const discountPercent = Math.round(Number(formData.get("discountPercent") ?? 0));
+
+  if (discountPercent < 0 || discountPercent > 80) throw new Error("Invalid discount.");
+
+  const where = !categoryId || categoryId === "all" ? {} : { categoryId };
+  const products = await prisma.product.findMany({
+    where,
+    select: { id: true, priceCents: true, compareAtPriceCents: true },
+  });
+
+  await prisma.$transaction(
+    products.map((p) => {
+      if (discountPercent === 0) {
+        return prisma.product.update({
+          where: { id: p.id },
+          data: {
+            priceCents: p.compareAtPriceCents ?? p.priceCents,
+            compareAtPriceCents: null,
+          },
+        });
+      }
+      const originalPrice = p.compareAtPriceCents ?? p.priceCents;
+      return prisma.product.update({
+        where: { id: p.id },
+        data: {
+          compareAtPriceCents: originalPrice,
+          priceCents: Math.max(Math.round(originalPrice * (1 - discountPercent / 100)), 1),
+        },
+      });
+    })
+  );
+
+  revalidatePath("/admin");
+  revalidatePath("/products");
+}
+
 export async function toggleProductActive(formData: FormData) {
   await ensureAdmin();
 
