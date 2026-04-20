@@ -617,6 +617,7 @@ export default async function AdminPage({
         return acc;
       }, {} as Record<string, number>)
     : {} as Record<string, number>;
+  const analyticsStatusCountValues = Object.values(analyticsStatusCounts) as number[];
   const analyticsTopProducts: [string, number][] = [];
   if (section === "analitika") {
     const sales: Record<string, number> = {};
@@ -913,7 +914,7 @@ export default async function AdminPage({
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium text-stone-800">Naročila ({allOrders.length})</h2>
                 <div className="flex gap-2 flex-wrap">
-                  {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                  {(Object.entries(STATUS_LABELS) as [string, string][]).map(([key, label]: [string, string]) => (
                     <span key={key} className={`text-xs px-2 py-0.5 border rounded-full ${STATUS_COLORS[key]}`}>{label}</span>
                   ))}
                 </div>
@@ -1180,7 +1181,7 @@ export default async function AdminPage({
               <div className="space-y-3">
                 {(["PENDING", "CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"] as const).map((status) => {
                   const count = analyticsStatusCounts[status] ?? 0;
-                  const total = Object.values(analyticsStatusCounts).reduce(
+                  const total = analyticsStatusCountValues.reduce(
                     (sum: number, value: number) => sum + value,
                     0
                   );
